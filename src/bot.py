@@ -84,16 +84,15 @@ class FrankBot(discord.Client):
         
     async def _handle_mention(self, message):
         """Handle when bot is mentioned - now with AI integration"""
-        channel_id = str(message.channel.id)
-        
-        # Get recent messages from database for context
-        recent_messages = self.message_storage.get_recent_messages(channel_id, Config.MAX_MESSAGE_CONTEXT_FOR_AI)
-        
-        logger.info(f"Bot mentioned in {getattr(message.channel, 'name', 'DM')} by {message.author.display_name}")
-        logger.info(f"Available context: {len(recent_messages)} messages from database")
-        
-        # Show typing indicator while processing AI response
+        # Show typing indicator immediately
         async with message.channel.typing():
+            channel_id = str(message.channel.id)
+            
+            # Get recent messages from database for context
+            recent_messages = self.message_storage.get_recent_messages(channel_id, Config.MAX_MESSAGE_CONTEXT_FOR_AI)
+            
+            logger.info(f"Bot mentioned in {getattr(message.channel, 'name', 'DM')} by {message.author.display_name}")
+            logger.info(f"Available context: {len(recent_messages)} messages from database")
             # Generate AI response
             try:
                 ai_response = await self.ai_client.generate_response(
