@@ -33,29 +33,25 @@ class MessageDatabase:
             ''')
             
             conn.execute('''
-                CREATE TABLE IF NOT EXISTS media_files (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    message_id INTEGER NOT NULL,
-                    filename TEXT NOT NULL,
-                    file_path TEXT,
-                    discord_url TEXT NOT NULL,
-                    file_type TEXT,
-                    file_size INTEGER,
-                    downloaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (message_id) REFERENCES messages(id)
+                CREATE TABLE IF NOT EXISTS conversations (
+                    id INTEGER PRIMARY KEY,
+                    channel_id TEXT UNIQUE,
+                    channel_name TEXT,
+                    last_activity DATETIME,
+                    message_count INTEGER,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
             
             # Create indexes for fast queries
             conn.execute('CREATE INDEX IF NOT EXISTS idx_channel_timestamp ON messages(channel_id, timestamp DESC)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_discord_message_id ON messages(discord_message_id)')
-            conn.execute('CREATE INDEX IF NOT EXISTS idx_media_message ON media_files(message_id)')
             
             conn.commit()
     
     def store_message(self, channel_id: str, discord_message_id: str, user_id: str, 
                      username: str, content: str, timestamp: datetime, 
-                     attachments: List[Dict] = None) -> int:
+                     attachments: Optional[List[Dict]] = None) -> int:
         """
         Store a Discord message in the database
         
@@ -84,16 +80,8 @@ class MessageDatabase:
                   timestamp, has_attachments, media_files_json))
             
             message_id = cursor.lastrowid
-            
-            # Store individual media file records
-            if attachments:
-                for attachment in attachments:
-                    conn.execute('''
-                        INSERT INTO media_files 
-                        (message_id, filename, discord_url, file_type, file_size)
-                        VALUES (?, ?, ?, ?, ?)
-                    ''', (message_id, attachment['filename'], attachment['url'],
-                          attachment.get('content_type'), attachment.get('size')))
+            if message_id is None:
+                raise ValueError("Failed to store message")
             
             conn.commit()
             return message_id
@@ -153,14 +141,8 @@ class MessageDatabase:
             old_message_ids = [row[0] for row in cursor.fetchall()]
             
             if old_message_ids:
-                # Delete associated media files first
+                # Delete old messages (media URLs are stored as JSON in messages table)
                 placeholders = ','.join('?' * len(old_message_ids))
-                conn.execute(f'''
-                    DELETE FROM media_files 
-                    WHERE message_id IN ({placeholders})
-                ''', old_message_ids)
-                
-                # Delete old messages
                 conn.execute(f'''
                     DELETE FROM messages 
                     WHERE id IN ({placeholders})
@@ -191,13 +173,3 @@ class MessageDatabase:
             ''')
             
             return [dict(row) for row in cursor.fetchall()]
-    
-    def update_media_file_path(self, message_id: int, filename: str, local_path: str):
-        """Update the local file path for a downloaded media file"""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute('''
-                UPDATE media_files 
-                SET file_path = ?
-                WHERE message_id = ? AND filename = ?
-            ''', (local_path, message_id, filename))
-            conn.commit()

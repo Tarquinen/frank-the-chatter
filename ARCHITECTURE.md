@@ -42,7 +42,7 @@ A Discord bot that automatically logs conversations and responds with AI when me
 ```
 
 ### Data Flow
-1. **Message Received** → Store directly in SQLite + download media
+1. **Message Received** → Store directly in SQLite with Discord CDN URLs
 2. **Bot Mentioned** → Query last 100 messages from database → Send to AI → Reply
 3. **Database Maintenance** → Periodic cleanup of old messages (keep last 1000 per channel)
 
@@ -54,7 +54,6 @@ frank-the-chatter/
 │   ├── bot.py                    # Main bot entry point
 │   ├── message_storage.py        # Direct database message storage
 │   ├── ai_client.py             # AI API integration
-│   ├── media_handler.py         # Media download and storage
 │   ├── database.py              # SQLite database operations
 │   └── utils/
 │       ├── __init__.py
@@ -62,10 +61,6 @@ frank-the-chatter/
 │       └── logger.py            # Logging setup
 ├── data/
 │   ├── conversations.db         # SQLite database
-│   ├── media/                   # Downloaded attachments
-│   │   ├── images/
-│   │   ├── videos/
-│   │   └── other/
 │   └── logs/
 │       └── bot.log             # Application logs
 ├── config/
@@ -80,8 +75,7 @@ frank-the-chatter/
 │       └── frank-bot.conf
 ├── tests/
 │   ├── test_message_storage.py
-│   ├── test_ai_client.py
-│   └── test_media_handler.py
+│   └── test_ai_client.py
 ├── ARCHITECTURE.md            # This file
 ├── README.md                  # Setup and usage instructions
 └── .gitignore                # Git ignore rules
@@ -116,20 +110,8 @@ CREATE TABLE messages (
     content TEXT,
     timestamp DATETIME,
     has_attachments BOOLEAN DEFAULT FALSE,
-    media_files TEXT, -- JSON array of file paths
+    media_files TEXT, -- JSON array of Discord CDN URLs and metadata
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
--- Media files table (URLs only)
-CREATE TABLE media_files (
-    id INTEGER PRIMARY KEY,
-    message_id INTEGER,
-    filename TEXT,
-    discord_url TEXT NOT NULL,    -- Discord CDN URL (permanent)
-    content_type TEXT,
-    file_size INTEGER,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (message_id) REFERENCES messages(id)
 );
 ```
 
@@ -309,14 +291,8 @@ DEBUG_MODE=false
 - [ ] Response generation and posting
 - [ ] Error handling and retries
 
-### Phase 4: Media Handling
-- [ ] Attachment detection and download
-- [ ] File organization system
-- [ ] Media metadata storage
-- [ ] Cleanup and maintenance
-
-### Phase 5: Production Deployment
-- [ ] VM setup automation
+### Phase 4: Production Deployment
+- [ ] VM setup automation  
 - [ ] Service configuration
 - [ ] Monitoring and logging
 - [ ] Backup and recovery procedures

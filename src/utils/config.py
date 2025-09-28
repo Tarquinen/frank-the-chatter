@@ -4,8 +4,11 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 
-# Load environment variables from parent directory
-load_dotenv(".env")
+# Get project root directory (parent of src/)
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+
+# Load environment variables from project root
+load_dotenv(PROJECT_ROOT / ".env")
 
 class Config:
     """Configuration settings for the bot"""
@@ -20,16 +23,14 @@ class Config:
     AI_MODEL = os.getenv("AI_MODEL", "gemini-2.5-flash")
     AI_MAX_TOKENS = int(os.getenv("AI_MAX_TOKENS", "20000"))
     
-    # Storage Configuration
-    DATABASE_PATH = os.getenv("DATABASE_PATH", "./data/conversations.db")
-    MEDIA_STORAGE_PATH = os.getenv("MEDIA_STORAGE_PATH", "./data/media")
-    LOG_FILE_PATH = os.getenv("LOG_FILE_PATH", "./data/logs/bot.log")
+    # Storage Configuration (absolute paths from project root)
+    DATABASE_PATH = os.getenv("DATABASE_PATH", str(PROJECT_ROOT / "data" / "conversations.db"))
+    LOG_FILE_PATH = os.getenv("LOG_FILE_PATH", str(PROJECT_ROOT / "data" / "logs" / "bot.log"))
     
     # Performance Settings
     MAX_ACTIVE_CONVERSATIONS = int(os.getenv("MAX_ACTIVE_CONVERSATIONS", "100"))
     MAX_MESSAGES_PER_CONVERSATION = int(os.getenv("MAX_MESSAGES_PER_CONVERSATION", "1000"))
     MAX_MESSAGE_CONTEXT_FOR_AI = int(os.getenv("MAX_MESSAGE_CONTEXT_FOR_AI", "100"))
-    MAX_MEDIA_FILE_SIZE_MB = int(os.getenv("MAX_MEDIA_FILE_SIZE_MB", "50"))
     
     # Logging
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
@@ -46,5 +47,4 @@ class Config:
         
         # Create directories if they don't exist
         Path(cls.DATABASE_PATH).parent.mkdir(parents=True, exist_ok=True)
-        Path(cls.MEDIA_STORAGE_PATH).mkdir(parents=True, exist_ok=True)
         Path(cls.LOG_FILE_PATH).parent.mkdir(parents=True, exist_ok=True)

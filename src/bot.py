@@ -3,6 +3,11 @@
 import discord
 from utils.config import Config
 from utils.logger import setup_logger
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent))
+
+from message_storage import MessageStorage
 
 # Validate configuration
 Config.validate()
@@ -19,21 +24,32 @@ class FrankBot(discord.Client):
         
         super().__init__()
         
-        # In-memory storage for active conversations (Phase 1)
-        self.conversations = {}  # channel_id -> list of recent messages
+        # Initialize database storage (Phase 2)
+        self.message_storage = MessageStorage()
+        logger.info("Database storage initialized")
         
     async def on_ready(self):
         """Called when bot connects successfully"""
+        if self.user is None:
+            logger.error("Bot user is None after connecting")
+            return
+            
         logger.info(f"Bot logged in as {self.user} (ID: {self.user.id})")
         logger.info(f"Bot is connected to {len(self.guilds)} servers")
         
-        # Log server information
+        # Log server information and conversation stats
         for guild in self.guilds:
             logger.info(f"Connected to server: {guild.name} (ID: {guild.id})")
+        
+        # Show conversation statistics from database
+        stats = self.message_storage.get_conversation_stats()
+        logger.info(f"Database contains {len(stats)} tracked conversations")
+        for stat in stats[:5]:  # Show top 5 active channels
+            logger.info(f"  Channel {stat['channel_id']}: {stat['message_count']} messages")
             
     async def on_message(self, message):
         """Handle incoming messages"""
-        # Store all messages in memory (including bot's own messages)
+        # Store all messages in database (including bot's own messages)
         await self._store_message(message)
         
         # Don't process bot's own messages for mentions
@@ -41,60 +57,56 @@ class FrankBot(discord.Client):
             return
         
         # Check if bot is mentioned
-        if self.user.mentioned_in(message):
+        if self.user and self.user.mentioned_in(message):
             await self._handle_mention(message)
             
     async def _store_message(self, message):
-        """Store message in in-memory conversation storage"""
-        channel_id = str(message.channel.id)
-        
-        # Initialize conversation if not exists
-        if channel_id not in self.conversations:
-            self.conversations[channel_id] = []
+        """Store message in database"""
+        try:
+            # Store message using MessageStorage
+            message_id = self.message_storage.store_message(message)
             
-        # Create message data
-        message_data = {
-            'id': str(message.id),
-            'author': message.author.name,
-            'author_id': str(message.author.id), 
-            'content': message.content,
-            'timestamp': message.created_at,
-            'attachments': [att.url for att in message.attachments] if message.attachments else []
-        }
-        
-        # Add to conversation
-        self.conversations[channel_id].append(message_data)
-        
-        # Keep only last 1000 messages per channel
-        if len(self.conversations[channel_id]) > Config.MAX_MESSAGES_PER_CONVERSATION:
-            self.conversations[channel_id] = self.conversations[channel_id][-Config.MAX_MESSAGES_PER_CONVERSATION:]
+            # Log message
+            channel_name = getattr(message.channel, 'name', f'Channel-{message.channel.id}')
+            log_msg = f"[{channel_name}] {message.author.display_name}: {message.content[:100]}{'...' if len(message.content) > 100 else ''}"
+            if message.attachments:
+                log_msg += f" [{len(message.attachments)} attachment(s)]"
+            logger.debug(log_msg)
             
-        # Log message
-        channel_name = getattr(message.channel, 'name', f'Channel-{message.channel.id}')
-        log_msg = f"[{channel_name}] {message.author.name}: {message.content[:100]}{'...' if len(message.content) > 100 else ''}"
-        if message.attachments:
-            log_msg += f" [{len(message.attachments)} attachment(s)]"
-        logger.info(log_msg)
+        except Exception as e:
+            logger.error(f"Failed to store message: {e}")
         
     async def _handle_mention(self, message):
         """Handle when bot is mentioned - placeholder for AI integration"""
         channel_id = str(message.channel.id)
         
-        # Get recent messages for context
-        recent_messages = self.conversations.get(channel_id, [])
-        context_messages = recent_messages[-Config.MAX_MESSAGE_CONTEXT_FOR_AI:]
+        # Get recent messages from database for context
+        recent_messages = self.message_storage.get_recent_messages(channel_id, Config.MAX_MESSAGE_CONTEXT_FOR_AI)
         
-        logger.info(f"Bot mentioned in {getattr(message.channel, 'name', 'DM')} by {message.author.name}")
-        logger.info(f"Available context: {len(context_messages)} messages")
+        logger.info(f"Bot mentioned in {getattr(message.channel, 'name', 'DM')} by {message.author.display_name}")
+        logger.info(f"Available context: {len(recent_messages)} messages from database")
+        
+        # Show formatted conversation context
+        if recent_messages:
+            context_preview = self.message_storage.format_messages_for_ai(recent_messages[-5:])  # Last 5 messages
+            logger.debug(f"Recent context:\n{context_preview}")
         
         # Placeholder response (will be replaced with AI integration in Phase 3)
-        await message.channel.send(f"Hi {message.author.mention}! I heard you mention me. I have {len(context_messages)} messages of context from this conversation. AI integration coming in Phase 3!")
+        await message.channel.send(
+            f"Hi {message.author.mention}! I heard you mention me. "
+            f"I have {len(recent_messages)} messages of context from this conversation stored in my database. "
+            f"AI integration coming in Phase 3!"
+        )
         
         # Note: Bot's response will be automatically stored when on_message fires for it
 
 def main():
     """Main entry point"""
     logger.info("Starting Frank the Chatter bot...")
+    
+    if not Config.DISCORD_TOKEN:
+        logger.error("DISCORD_TOKEN not found in environment")
+        return
     
     try:
         bot = FrankBot()
