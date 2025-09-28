@@ -51,6 +51,22 @@ def show_stats():
         for row in cursor:
             channel_id, channel_name, msg_count, last_activity = row
             print(f"Channel {channel_id}: {msg_count} messages (last: {last_activity})")
+            
+            # Get last 3 active users in this channel (excluding frank_the_chatter)
+            user_cursor = conn.execute("""
+                SELECT username, MAX(timestamp) as last_message
+                FROM messages 
+                WHERE channel_id = ? AND username != 'frank_the_chatter'
+                GROUP BY username
+                ORDER BY last_message DESC
+                LIMIT 3
+            """, (channel_id,))
+            
+            active_users = user_cursor.fetchall()
+            if active_users:
+                users_list = [user[0] for user in active_users]
+                print(f"  Recent users: {', '.join(users_list)}")
+            print()
 
 def show_recent_messages(limit=10):
     """Show recent messages across all channels"""
