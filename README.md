@@ -41,7 +41,7 @@ src/bot.py              # Main bot code
 src/utils/config.py     # Configuration management
 src/utils/logger.py     # Logging setup
 config/requirements.txt # Python dependencies
-config/.env            # Environment variables
+.env                  # Environment variables
 data/logs/            # Log files (created automatically)
 ```
 

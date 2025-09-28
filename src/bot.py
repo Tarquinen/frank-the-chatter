@@ -8,6 +8,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
 
 from message_storage import MessageStorage
+from ai_client import AIClient
 
 # Validate configuration
 Config.validate()
@@ -27,6 +28,11 @@ class FrankBot(discord.Client):
         # Initialize database storage (Phase 2)
         self.message_storage = MessageStorage()
         logger.info("Database storage initialized")
+        
+        # Initialize AI client (Phase 3)
+        self.ai_client = AIClient()
+        ai_info = self.ai_client.get_model_info()
+        logger.info(f"AI client initialized - Model: {ai_info['model']}, Available: {ai_info['available']}")
         
     async def on_ready(self):
         """Called when bot connects successfully"""
@@ -77,7 +83,7 @@ class FrankBot(discord.Client):
             logger.error(f"Failed to store message: {e}")
         
     async def _handle_mention(self, message):
-        """Handle when bot is mentioned - placeholder for AI integration"""
+        """Handle when bot is mentioned - now with AI integration"""
         channel_id = str(message.channel.id)
         
         # Get recent messages from database for context
@@ -86,17 +92,28 @@ class FrankBot(discord.Client):
         logger.info(f"Bot mentioned in {getattr(message.channel, 'name', 'DM')} by {message.author.display_name}")
         logger.info(f"Available context: {len(recent_messages)} messages from database")
         
-        # Show formatted conversation context
-        if recent_messages:
-            context_preview = self.message_storage.format_messages_for_ai(recent_messages[-5:])  # Last 5 messages
-            logger.debug(f"Recent context:\n{context_preview}")
-        
-        # Placeholder response (will be replaced with AI integration in Phase 3)
-        await message.channel.send(
-            f"Hi {message.author.mention}! I heard you mention me. "
-            f"I have {len(recent_messages)} messages of context from this conversation stored in my database. "
-            f"AI integration coming in Phase 3!"
-        )
+        # Generate AI response
+        try:
+            ai_response = await self.ai_client.generate_response(
+                context_messages=recent_messages,
+                user_message=message.content,
+                mentioned_by=message.author.display_name
+            )
+            
+            if ai_response:
+                await message.channel.send(ai_response)
+            else:
+                # Fallback response if AI fails
+                await message.channel.send(
+                    f"Hi {message.author.mention}! I heard you mention me. "
+                    f"I have {len(recent_messages)} messages of context stored. "
+                    f"My AI is having trouble right now, but I'm still here!"
+                )
+        except Exception as e:
+            logger.error(f"Error handling mention: {e}")
+            await message.channel.send(
+                f"Hi {message.author.mention}! Something went wrong, but I'm still logging our conversation!"
+            )
         
         # Note: Bot's response will be automatically stored when on_message fires for it
 
