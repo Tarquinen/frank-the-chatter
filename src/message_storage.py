@@ -1,5 +1,5 @@
 import discord
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 from database import MessageDatabase
 from utils.logger import setup_logger
@@ -17,6 +17,8 @@ class MessageStorage:
         # Use config path by default
         self.db_path = db_path or Config.DATABASE_PATH
         self.db = MessageDatabase(self.db_path)
+        self.last_size_check = datetime.now()
+        self.size_check_interval = timedelta(hours=1)  # Check database size every hour
         logger.info(f"MessageStorage initialized with database: {self.db_path}")
     
     def store_message(self, message: discord.Message) -> int:
@@ -68,6 +70,9 @@ class MessageStorage:
             
             # Periodic cleanup check
             self.maybe_cleanup_channel(channel_id)
+            
+            # Check database size periodically
+            self.maybe_cleanup_database_size()
             
             return message_id
             
@@ -142,6 +147,43 @@ class MessageStorage:
                 
         except Exception as e:
             logger.error(f"Failed to cleanup channel {channel_id}: {e}")
+    
+    def maybe_cleanup_database_size(self, max_size_gb: float = 15.0):
+        """
+        Check database size and cleanup if needed
+        Only runs once per hour to avoid performance impact
+        
+        Args:
+            max_size_gb: Maximum database size in GB before cleanup
+        """
+        now = datetime.now()
+        if (now - self.last_size_check) < self.size_check_interval:
+            return
+            
+        self.last_size_check = now
+        
+        try:
+            current_size_mb = self.db.get_database_size_mb()
+            logger.debug(f"Database size check: {current_size_mb:.1f}MB")
+            
+            if current_size_mb > (max_size_gb * 1024):
+                logger.warning(f"Database size ({current_size_mb:.1f}MB) approaching limit, starting cleanup")
+                self.db.cleanup_if_database_too_large(max_size_gb)
+                
+        except Exception as e:
+            logger.error(f"Failed to check database size: {e}")
+    
+    def get_database_info(self) -> Dict[str, Any]:
+        """Get current database information"""
+        try:
+            return {
+                'size_mb': self.db.get_database_size_mb(),
+                'total_messages': self.db.get_total_message_count(),
+                'path': self.db_path
+            }
+        except Exception as e:
+            logger.error(f"Failed to get database info: {e}")
+            return {'error': str(e)}
     
     def get_conversation_stats(self) -> List[Dict[str, Any]]:
         """

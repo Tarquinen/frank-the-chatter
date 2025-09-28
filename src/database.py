@@ -1,6 +1,7 @@
 import sqlite3
 import json
-from datetime import datetime
+import os
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
@@ -173,3 +174,70 @@ class MessageDatabase:
             ''')
             
             return [dict(row) for row in cursor.fetchall()]
+    
+    def get_database_size_mb(self) -> float:
+        """Get current database file size in MB"""
+        try:
+            size_bytes = os.path.getsize(self.db_path)
+            return size_bytes / (1024 * 1024)
+        except FileNotFoundError:
+            return 0.0
+    
+    def get_total_message_count(self) -> int:
+        """Get total number of messages across all channels"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute('SELECT COUNT(*) FROM messages')
+            return cursor.fetchone()[0]
+    
+    def cleanup_old_messages_by_age(self, days_to_keep: int = 30):
+        """
+        Remove messages older than specified days across all channels
+        
+        Args:
+            days_to_keep: Keep messages newer than this many days
+        """
+        cutoff_date = datetime.now() - timedelta(days=days_to_keep)
+        
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute('''
+                DELETE FROM messages 
+                WHERE timestamp < ?
+            ''', (cutoff_date,))
+            
+            deleted_count = cursor.rowcount
+            conn.commit()
+            
+            if deleted_count > 0:
+                print(f"Cleaned up {deleted_count} messages older than {days_to_keep} days")
+            
+            return deleted_count
+    
+    def cleanup_if_database_too_large(self, max_size_gb: float = 15.0):
+        """
+        Perform cleanup if database exceeds size limit
+        
+        Args:
+            max_size_gb: Maximum database size in GB before cleanup
+        """
+        current_size_mb = self.get_database_size_mb()
+        max_size_mb = max_size_gb * 1024
+        
+        if current_size_mb > max_size_mb:
+            print(f"Database size ({current_size_mb:.1f}MB) exceeds limit ({max_size_mb:.1f}MB)")
+            
+            # First try cleaning old messages (older than 30 days)
+            deleted_by_age = self.cleanup_old_messages_by_age(30)
+            
+            # If still too large, clean older messages (older than 7 days)
+            if self.get_database_size_mb() > max_size_mb:
+                deleted_by_age += self.cleanup_old_messages_by_age(7)
+            
+            # If still too large, limit per-channel messages
+            if self.get_database_size_mb() > max_size_mb:
+                channels = self.get_channels_with_messages()
+                for channel in channels:
+                    if channel['message_count'] > 1000:
+                        self.cleanup_old_messages(channel['channel_id'], 500)
+            
+            new_size_mb = self.get_database_size_mb()
+            print(f"Database cleanup complete. Size: {new_size_mb:.1f}MB")

@@ -2,6 +2,7 @@
 
 import logging
 import sys
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from .config import Config
 
@@ -29,9 +30,14 @@ def setup_logger(name: str = "frank_bot") -> logging.Logger:
     console_handler.setFormatter(simple_formatter)
     logger.addHandler(console_handler)
     
-    # File handler
+    # Rotating file handler (10MB per file, keep 5 backup files)
     log_file = Path(Config.LOG_FILE_PATH)
-    file_handler = logging.FileHandler(log_file, encoding='utf-8')
+    file_handler = RotatingFileHandler(
+        log_file, 
+        maxBytes=10*1024*1024,  # 10MB
+        backupCount=5,          # Keep 5 backup files
+        encoding='utf-8'
+    )
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(detailed_formatter)
     logger.addHandler(file_handler)
