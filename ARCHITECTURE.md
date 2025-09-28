@@ -120,16 +120,15 @@ CREATE TABLE messages (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Media files table
+-- Media files table (URLs only)
 CREATE TABLE media_files (
     id INTEGER PRIMARY KEY,
     message_id INTEGER,
     filename TEXT,
-    file_path TEXT,           -- Local storage path
-    discord_url TEXT,         -- Original Discord CDN URL
-    file_type TEXT,
+    discord_url TEXT NOT NULL,    -- Discord CDN URL (permanent)
+    content_type TEXT,
     file_size INTEGER,
-    downloaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (message_id) REFERENCES messages(id)
 );
 ```
@@ -183,46 +182,38 @@ def prepare_ai_context(channel_id, mention_message):
 
 ### 4. Media Handling
 
-**Discord Media URLs**
-Discord automatically hosts all media files and provides URLs for each attachment:
-- `message.attachments` contains list of all attached files
-- Each attachment has `.url` property with Discord CDN link
-- URLs are permanent and accessible without authentication
+**Discord CDN URLs**
+Discord provides reliable, permanent CDN URLs for all media:
+- `message.attachments[].url` contains Discord CDN links
+- URLs are persistent and don't require authentication
+- Format: `https://cdn.discordapp.com/attachments/{channel_id}/{message_id}/{filename}`
 - File metadata available: `.filename`, `.size`, `.content_type`
+
+**Storage Strategy - URLs Only**
+Store only the Discord CDN URLs, no local file downloads:
+```python
+# Store Discord URL directly - no downloading needed
+for attachment in message.attachments:
+    media_info = {
+        'filename': attachment.filename,
+        'url': attachment.url,
+        'content_type': attachment.content_type,
+        'size': attachment.size
+    }
+```
 
 **Supported Media Types**
 - Images: jpg, png, gif, webp
-- Videos: mp4, webm, mov
+- Videos: mp4, webm, mov  
 - Documents: pdf, txt, doc, docx
-- Other: zip, rar, etc.
+- Any file type Discord accepts
 
-**Storage Strategy**
-We'll store both the Discord URL AND download files locally:
-```python
-# Store Discord URL for immediate access
-discord_url = attachment.url
-
-# Download for local backup and AI processing
-local_path = f"data/media/{channel_id}_{message_id}_{filename}"
-```
-
-**Storage Organization**
-```
-data/media/
-├── YYYY-MM/                    # Monthly folders
-│   ├── images/
-│   │   └── channelid_messageid_filename.ext
-│   ├── videos/
-│   └── other/
-```
-
-**Download Process**
-1. Detect message with attachments via `message.attachments`
-2. Store Discord URL immediately (for fast access)
-3. Download file from `attachment.url` to local storage
-4. Validate file type and size
-5. Update database with both Discord URL and local path
-6. Clean up any failed downloads
+**Why URLs Only:**
+- Discord CDN is reliable and persistent
+- Saves 15-20GB of disk space 
+- Faster processing (no download time)
+- No file management/cleanup needed
+- URLs work indefinitely without authentication
 
 ### 5. Google Cloud VM Deployment
 

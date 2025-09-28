@@ -26,6 +26,11 @@ class MessageListener(discord.Client):
             author = message.author.name
             content = message.content
             
+            # Check for attachments (images)
+            if message.attachments:
+                for attachment in message.attachments:
+                    content += f" [Image: {attachment.url}]"
+            
             log_entry = f"[{timestamp}] {author}: {content}"
             print(log_entry)
             
