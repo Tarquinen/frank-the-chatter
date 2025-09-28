@@ -93,6 +93,48 @@ def show_channel_messages(channel_id, limit=10):
             
             print(f"[{timestamp[:19]}] {username}: {content}{media_info}")
 
+def clear_channel(channel_id, confirm=False):
+    """Clear all messages from a specific channel"""
+    with connect_db() as conn:
+        # First, check if channel exists and get message count
+        cursor = conn.execute("SELECT message_count, channel_name FROM conversations WHERE channel_id = ?", (channel_id,))
+        result = cursor.fetchone()
+        
+        if not result:
+            print(f"Channel {channel_id} not found in database")
+            return
+        
+        message_count, channel_name = result
+        channel_display = channel_name if channel_name else channel_id
+        
+        if message_count == 0:
+            print(f"Channel '{channel_display}' already has no messages")
+            return
+        
+        if not confirm:
+            print(f"WARNING: This will delete {message_count} messages from channel '{channel_display}'")
+            print(f"To confirm, run: python db_query.py clear {channel_id} --confirm")
+            return
+        
+        try:
+            # Delete messages from the channel
+            cursor = conn.execute("DELETE FROM messages WHERE channel_id = ?", (channel_id,))
+            deleted_count = cursor.rowcount
+            
+            # Update conversation record
+            conn.execute("""
+                UPDATE conversations 
+                SET message_count = 0, last_activity = CURRENT_TIMESTAMP
+                WHERE channel_id = ?
+            """, (channel_id,))
+            
+            conn.commit()
+            print(f"Successfully deleted {deleted_count} messages from channel '{channel_display}'")
+            
+        except Exception as e:
+            print(f"Error clearing channel: {e}")
+            conn.rollback()
+
 def custom_query(query):
     """Execute a custom SQL query"""
     print(f"\n=== CUSTOM QUERY ===")
@@ -126,10 +168,12 @@ def main():
         print("  python db_query.py stats           - Show database statistics")
         print("  python db_query.py recent [N]      - Show N recent messages (default 10)")
         print("  python db_query.py channel <id> [N] - Show N messages from channel (default 10)")
+        print("  python db_query.py clear <id>      - Clear all messages from channel (requires --confirm)")
         print("  python db_query.py query <SQL>     - Execute custom SQL query")
         print("\nExamples:")
         print("  python db_query.py recent 20")
         print("  python db_query.py channel 1421920063572934678")
+        print("  python db_query.py clear 1421920063572934678 --confirm")
         print('  python db_query.py query "SELECT username, COUNT(*) FROM messages GROUP BY username"')
         return
     
@@ -149,6 +193,13 @@ def main():
         channel_id = sys.argv[2]
         limit = int(sys.argv[3]) if len(sys.argv) > 3 else 10
         show_channel_messages(channel_id, limit)
+    elif command == "clear":
+        if len(sys.argv) < 3:
+            print("Error: Channel ID required")
+            return
+        channel_id = sys.argv[2]
+        confirm = "--confirm" in sys.argv
+        clear_channel(channel_id, confirm)
     elif command == "query":
         if len(sys.argv) < 3:
             print("Error: SQL query required")
