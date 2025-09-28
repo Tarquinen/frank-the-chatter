@@ -92,28 +92,30 @@ class FrankBot(discord.Client):
         logger.info(f"Bot mentioned in {getattr(message.channel, 'name', 'DM')} by {message.author.display_name}")
         logger.info(f"Available context: {len(recent_messages)} messages from database")
         
-        # Generate AI response
-        try:
-            ai_response = await self.ai_client.generate_response(
-                context_messages=recent_messages,
-                user_message=message.content,
-                mentioned_by=message.author.display_name
-            )
-            
-            if ai_response:
-                await message.channel.send(ai_response)
-            else:
-                # Fallback response if AI fails
-                await message.channel.send(
-                    f"Hi {message.author.mention}! I heard you mention me. "
-                    f"I have {len(recent_messages)} messages of context stored. "
-                    f"My AI is having trouble right now, but I'm still here!"
+        # Show typing indicator while processing AI response
+        async with message.channel.typing():
+            # Generate AI response
+            try:
+                ai_response = await self.ai_client.generate_response(
+                    context_messages=recent_messages,
+                    user_message=message.content,
+                    mentioned_by=message.author.display_name
                 )
-        except Exception as e:
-            logger.error(f"Error handling mention: {e}")
-            await message.channel.send(
-                f"Hi {message.author.mention}! Something went wrong, but I'm still logging our conversation!"
-            )
+                
+                if ai_response:
+                    await message.channel.send(ai_response)
+                else:
+                    # Fallback response if AI fails
+                    await message.channel.send(
+                        f"Hi {message.author.mention}! I heard you mention me. "
+                        f"I have {len(recent_messages)} messages of context stored. "
+                        f"My AI is having trouble right now, but I'm still here!"
+                    )
+            except Exception as e:
+                logger.error(f"Error handling mention: {e}")
+                await message.channel.send(
+                    f"Hi {message.author.mention}! Something went wrong, but I'm still logging our conversation!"
+                )
         
         # Note: Bot's response will be automatically stored when on_message fires for it
 
