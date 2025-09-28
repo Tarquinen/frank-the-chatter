@@ -136,10 +136,11 @@ CREATE TABLE media_files (
 ### 2. Message Management Logic
 
 **Database-First Approach**
-- All messages written directly to SQLite as received
+- All messages written directly to SQLite as received (including bot's own responses)
 - Query database for recent messages when bot is mentioned
 - Automatic cleanup of old messages (keep last 1000 per channel)
 - Index on channel_id and timestamp for fast queries
+- Bot's own messages are included in conversation history for context
 
 **Message Retrieval for AI**
 ```python
@@ -290,10 +291,11 @@ DEBUG_MODE=false
 ## Implementation Phases
 
 ### Phase 1: Core Bot Framework
-- [ ] Basic Discord bot connection
-- [ ] Message event handling
-- [ ] In-memory message storage
-- [ ] Simple mention detection
+- [x] Basic Discord bot connection
+- [x] Message event handling
+- [x] In-memory message storage
+- [x] Simple mention detection
+- [x] Bot's own messages included in conversation history
 
 ### Phase 2: Storage System
 - [ ] SQLite database setup
