@@ -20,7 +20,7 @@ class Config:
     # AI API Configuration  
     AI_API_KEY = os.getenv("GEMINI_API_KEY")  # Using Gemini from .env
     AI_API_BASE_URL = os.getenv("AI_API_BASE_URL", "https://generativelanguage.googleapis.com/v1")
-    AI_MODEL = os.getenv("AI_MODEL", "gemini-2.0-flash-001")  # Updated to use fastest model
+    AI_MODEL = os.getenv("AI_MODEL", "gemini-2.5-flash")  # Updated to use Gemini 2.5 Flash
     AI_MAX_TOKENS = int(os.getenv("AI_MAX_TOKENS", "2000"))  # Reduced for Discord responses
     
     # Storage Configuration (absolute paths from project root)
