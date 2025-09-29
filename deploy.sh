@@ -49,6 +49,10 @@ alias frank-logs="tail -f bot.log"
 alias frank-status="ps aux | grep 'src/bot.py' | grep -v grep"
 EOF
 
+# Reload .bashrc to make aliases available
+echo "🔄 Reloading shell configuration..."
+source ~/.bashrc
+
 echo ""
 echo "✅ Setup complete!"
 echo ""
@@ -57,15 +61,12 @@ echo "1. Create .env file with your API keys:"
 echo "   DISCORD_TOKEN=your_token_here"
 echo "   GEMINI_API_KEY=your_key_here"
 echo ""
-echo "2. Reload your shell:"
-echo "   source ~/.bashrc"
-echo ""
-echo "3. Use Frank commands:"
+echo "2. Use Frank commands (aliases now loaded):"
 echo "   frank-start          # Start bot in background"
 echo "   frank-stop           # Stop bot"  
 echo "   frank-status         # Check if running"
 echo "   frank-logs           # View logs"
 echo "   frank-query stats    # Query database"
 echo ""
-echo "4. Or run manually:"
+echo "3. Or run manually:"
 echo "   ./run.sh             # Run in foreground"
