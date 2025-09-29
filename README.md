@@ -1,24 +1,8 @@
 # Frank the Chatter - Discord Bot
 
-A Discord bot that logs conversations to SQLite and responds intelligently with AI when mentioned. **Ready for production deployment!**
+A Discord bot that logs conversations to SQLite and responds intelligently with AI when mentioned.
 
-## ✅ Current Status: Phase 4 Complete
-
-**All phases implemented:**
-- ✅ **Phase 1:** Discord bot framework with message logging  
-- ✅ **Phase 2:** SQLite database storage with conversation management
-- ✅ **Phase 3:** AI integration with Google Gemini 2.0 Flash
-- ✅ **Phase 4:** Production deployment infrastructure
-
-## 🚀 Quick Deploy to Google Cloud
-
-**For production deployment:**
-```bash
-# Follow the comprehensive deployment guide
-cat deploy/DEPLOYMENT.md
-```
-
-## 🧪 Local Development
+## 🚀 Quick Setup
 
 1. **Get API Keys:**
    - Discord Bot Token: https://discord.com/developers/applications
@@ -26,14 +10,43 @@ cat deploy/DEPLOYMENT.md
 
 2. **Setup Environment:**
    ```bash
-   cp config/.env.production config/.env
-   # Edit config/.env with your actual API keys
+   python3 -m venv venv
+   ./venv/bin/pip install -r config/requirements.txt
    ```
 
-3. **Install and Run:**
+3. **Create `.env` file:**
    ```bash
-   pip install -r config/requirements.txt
+   DISCORD_TOKEN=your_discord_bot_token_here
+   GEMINI_API_KEY=your_google_gemini_api_key_here
+   AI_MODEL=gemini-2.0-flash-001
+   DATABASE_PATH=./data/conversations.db
+   LOG_FILE_PATH=./data/logs/bot.log
+   LOG_LEVEL=INFO
+   ```
+
+4. **Run:**
+   ```bash
    ./run.sh
+   ```
+
+## ☁️ Deploy to Cloud VM
+
+1. **Create VM** (Google Cloud, AWS, etc.)
+2. **SSH and clone:**
+   ```bash
+   git clone <your-repo-url>
+   cd frank-the-chatter
+   ```
+3. **Install Python:**
+   ```bash
+   sudo apt install python3 python3-pip python3-venv
+   ```
+4. **Setup and run:**
+   ```bash
+   python3 -m venv venv
+   ./venv/bin/pip install -r config/requirements.txt
+   # Copy your .env file with API keys
+   nohup ./run.sh > bot.log 2>&1 &
    ```
 
 ## 🤖 What Frank Does
