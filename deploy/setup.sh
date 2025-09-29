@@ -43,7 +43,6 @@ fi
 # Create data directories
 echo "📂 Creating data directories..."
 sudo -u frankbot mkdir -p /opt/frank-bot/data/logs
-sudo -u frankbot mkdir -p /opt/frank-bot/config
 
 # Set up Python virtual environment
 echo "🔧 Setting up Python virtual environment..."
@@ -54,15 +53,15 @@ sudo -u frankbot ./venv/bin/pip install -r config/requirements.txt
 
 # Create environment file template
 echo "⚙️  Creating environment configuration..."
-if [ ! -f "/opt/frank-bot/config/.env" ]; then
-    sudo -u frankbot tee /opt/frank-bot/config/.env > /dev/null <<EOF
+if [ ! -f "/opt/frank-bot/.env" ]; then
+    sudo -u frankbot tee /opt/frank-bot/.env > /dev/null <<EOF
 # Discord Configuration
 DISCORD_TOKEN=your_discord_bot_token_here
 BOT_USER_ID=your_bot_user_id_here
 
 # AI API Configuration (Google Gemini)
-AI_API_KEY=your_google_ai_api_key_here
-AI_MODEL=gemini-2.0-flash-001
+GEMINI_API_KEY=your_google_gemini_api_key_here
+AI_MODEL=gemini-2.5-flash
 AI_MAX_TOKENS=2000
 
 # Storage Configuration
@@ -78,7 +77,7 @@ MAX_MESSAGE_CONTEXT_FOR_AI=100
 LOG_LEVEL=INFO
 DEBUG_MODE=false
 EOF
-    echo "⚠️  Please edit /opt/frank-bot/config/.env with your actual API keys"
+    echo "⚠️  Please edit /opt/frank-bot/.env with your actual API keys"
 fi
 
 # Install systemd service
@@ -106,7 +105,7 @@ print('Database initialized successfully')
 echo "✅ Setup complete!"
 echo ""
 echo "Next steps:"
-echo "1. Edit /opt/frank-bot/config/.env with your API keys"
+echo "1. Edit /opt/frank-bot/.env with your API keys"
 echo "2. Test the bot: sudo -u frankbot /opt/frank-bot/venv/bin/python /opt/frank-bot/src/bot.py"
 echo "3. Start the service: sudo systemctl start frank-bot"
 echo "4. Check status: sudo systemctl status frank-bot"
