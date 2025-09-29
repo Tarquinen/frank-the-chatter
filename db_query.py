@@ -62,7 +62,7 @@ def show_stats():
                 """
                 SELECT username, MAX(timestamp) as last_message
                 FROM messages 
-                WHERE channel_id = ? AND username != 'gary_not_frank'
+                WHERE channel_id = ? AND username != 'friendly_gary'
                 GROUP BY username
                 ORDER BY last_message DESC
                 LIMIT 3
