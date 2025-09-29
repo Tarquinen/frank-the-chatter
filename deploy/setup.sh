@@ -13,7 +13,7 @@ sudo apt update && sudo apt upgrade -y
 
 # Install Python 3.10+ and required packages
 echo "🐍 Installing Python and dependencies..."
-sudo apt install -y python3.10 python3.10-pip python3.10-venv git sqlite3 curl
+sudo apt install -y python3 python3-pip python3-venv git sqlite3 curl
 
 # Create application user
 echo "👤 Creating frankbot user..."
@@ -47,7 +47,7 @@ sudo -u frankbot mkdir -p /opt/frank-bot/data/logs
 # Set up Python virtual environment
 echo "🔧 Setting up Python virtual environment..."
 cd /opt/frank-bot
-sudo -u frankbot python3.10 -m venv venv
+sudo -u frankbot python3 -m venv venv
 sudo -u frankbot ./venv/bin/pip install --upgrade pip
 sudo -u frankbot ./venv/bin/pip install -r config/requirements.txt
 
