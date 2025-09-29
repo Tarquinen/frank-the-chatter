@@ -16,7 +16,6 @@ class Config:
 
     # Discord Configuration
     DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-    BOT_USER_ID = os.getenv("BOT_USER_ID")
 
     # AI API Configuration
     AI_API_KEY = os.getenv("GEMINI_API_KEY")  # Using Gemini from .env
@@ -24,7 +23,7 @@ class Config:
         "AI_API_BASE_URL", "https://generativelanguage.googleapis.com/v1"
     )
     AI_MODEL = os.getenv(
-        "AI_MODEL", "gemini-2.5-pro"
+        "AI_MODEL", "gemini-2.5-flash"
     )  # Updated to use Gemini 2.5 Flash
     AI_MAX_TOKENS = int(
         os.getenv("AI_MAX_TOKENS", "2000")
@@ -39,10 +38,6 @@ class Config:
     )
 
     # Performance Settings
-    MAX_ACTIVE_CONVERSATIONS = int(os.getenv("MAX_ACTIVE_CONVERSATIONS", "100"))
-    MAX_MESSAGES_PER_CONVERSATION = int(
-        os.getenv("MAX_MESSAGES_PER_CONVERSATION", "1000")
-    )
     MAX_MESSAGE_CONTEXT_FOR_AI = int(os.getenv("MAX_MESSAGE_CONTEXT_FOR_AI", "100"))
 
     # Logging
