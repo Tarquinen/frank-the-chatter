@@ -35,10 +35,14 @@ db = MessageDatabase()
 print('✅ Database initialized')
 "
 
-# Add convenient aliases to .bashrc (only if not already present)
-echo "⚙️ Adding Frank aliases to .bashrc..."
-if ! grep -q "Frank the Chatter aliases" ~/.bashrc; then
-    cat >> ~/.bashrc << 'EOF'
+# Add/update convenient aliases in .bashrc
+echo "⚙️ Adding/updating Frank aliases in .bashrc..."
+
+# Remove old Frank aliases if they exist
+sed -i '/# Frank the Chatter aliases/,/^$/d' ~/.bashrc
+
+# Add current Frank aliases
+cat >> ~/.bashrc << 'EOF'
 
 # Frank the Chatter aliases
 alias sv="source venv/bin/activate"
@@ -50,9 +54,6 @@ alias frank-restart="frank-stop && sleep 2 && frank-start"
 alias frank-logs="tail -f bot.log"
 alias frank-status="ps aux | grep 'src/bot.py' | grep -v grep"
 EOF
-else
-    echo "Frank aliases already exist in .bashrc, skipping..."
-fi
 
 echo ""
 echo "✅ Setup complete!"
