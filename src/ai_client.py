@@ -45,10 +45,10 @@ class AIClient:
                 return prompt_path.read_text().strip()
             else:
                 logger.warning("prompt.txt not found, using default system prompt")
-                return "You are Frank, a helpful AI assistant in a Discord chat."
+                return "You are Gary, a helpful AI assistant in a Discord chat."
         except Exception as e:
             logger.error(f"Failed to load system prompt: {e}")
-            return "You are Frank, a helpful AI assistant in a Discord chat."
+            return "You are Gary, a helpful AI assistant in a Discord chat."
 
     async def generate_response(
         self, context_messages: List[dict], user_message: str, mentioned_by: str
@@ -121,9 +121,7 @@ class AIClient:
             # Create the generation config
             config = types.GenerateContentConfig(
                 system_instruction=self.system_prompt,
-                max_output_tokens=min(
-                    Config.AI_MAX_TOKENS, 500
-                ),
+                max_output_tokens=min(Config.AI_MAX_TOKENS, 500),
                 temperature=1,
                 top_p=0.95,
                 top_k=20,
@@ -140,18 +138,36 @@ class AIClient:
                 None, self._sync_generate_content, formatted_context, config
             )
 
-            if response and response.text:
-                text = response.text.strip()
-                if len(text) > 2000:
-                    logger.warning(f"Response too long ({len(text)} chars), truncating to 2000")
-                    text = text[:1997] + "..."
-                return text
-            else:
-                logger.warning("Gemini API returned empty response")
+            if not response:
+                logger.warning("Gemini API returned None response")
                 return None
 
+            try:
+                text = response.text.strip() if response.text else ""
+            except (AttributeError, ValueError) as e:
+                logger.warning(f"Unable to access response.text: {e}")
+                logger.debug(f"Response object: {response}")
+                if hasattr(response, 'candidates') and response.candidates:
+                    logger.debug(f"Candidates: {response.candidates}")
+                    logger.debug(f"First candidate finish_reason: {response.candidates[0].finish_reason}")
+                return None
+
+            if not text:
+                logger.warning("Gemini API returned empty text")
+                if hasattr(response, 'candidates') and response.candidates:
+                    logger.debug(f"Finish reason: {response.candidates[0].finish_reason}")
+                return None
+
+            if len(text) > 2000:
+                logger.warning(
+                    f"Response too long ({len(text)} chars), truncating to 2000"
+                )
+                text = text[:1997] + "..."
+            
+            return text
+
         except Exception as e:
-            logger.error(f"Gemini API error: {e}")
+            logger.error(f"Gemini API error: {e}", exc_info=True)
             return None
 
     def _sync_generate_content(self, content: str, config: types.GenerateContentConfig):
