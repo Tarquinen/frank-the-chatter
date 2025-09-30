@@ -24,14 +24,14 @@ def test_with_actual_context():
     db = MessageDatabase()
     
     # Get most active channel (group chat)
-    stats = db.get_conversation_stats()
-    if not stats:
+    channels = db.get_channels_with_messages()
+    if not channels:
         print("No messages in database")
         return
     
-    group_channel_id = stats[0]['channel_id']
+    group_channel_id = channels[0]['channel_id']
     print(f"Testing with channel: {group_channel_id}")
-    print(f"Messages in channel: {stats[0]['message_count']}\n")
+    print(f"Messages in channel: {channels[0]['message_count']}\n")
     
     # Get recent messages from that channel
     recent = db.get_recent_messages(group_channel_id, 25)
@@ -78,7 +78,7 @@ def test_with_actual_context():
     )
     
     print("=== Test 1: With Tools (Current Config) ===")
-    for attempt in range(3):
+    for attempt in range(5):
         try:
             response = client.models.generate_content(
                 model=Config.AI_MODEL,
@@ -116,7 +116,7 @@ def test_with_actual_context():
         top_k=20,
     )
     
-    for attempt in range(3):
+    for attempt in range(5):
         try:
             response = client.models.generate_content(
                 model=Config.AI_MODEL,
