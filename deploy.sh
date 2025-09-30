@@ -21,6 +21,10 @@ python3 -m venv venv
 ./venv/bin/pip install --upgrade pip
 ./venv/bin/pip install -r config/requirements.txt
 
+# Patch discord.py-self to support global_name
+echo "🔧 Patching discord.py-self for display name support..."
+./patch_discord_global_name.sh
+
 # Create data directories
 echo "📂 Creating data directories..."
 mkdir -p data/logs
