@@ -122,11 +122,16 @@ class AIClient:
             config = types.GenerateContentConfig(
                 system_instruction=self.system_prompt,
                 max_output_tokens=min(
-                    Config.AI_MAX_TOKENS, 2000
-                ),  # Keep Discord responses reasonable
-                temperature=1,  # Balanced creativity
+                    Config.AI_MAX_TOKENS, 500
+                ),
+                temperature=1,
                 top_p=0.95,
                 top_k=20,
+                tools=[
+                    types.Tool(google_search=types.GoogleSearch()),
+                    types.Tool(code_execution=types.ToolCodeExecution()),
+                    types.Tool(url_context=types.UrlContext()),
+                ],
             )
 
             # Run the synchronous API call in a thread pool to avoid blocking
@@ -136,7 +141,11 @@ class AIClient:
             )
 
             if response and response.text:
-                return response.text.strip()
+                text = response.text.strip()
+                if len(text) > 2000:
+                    logger.warning(f"Response too long ({len(text)} chars), truncating to 2000")
+                    text = text[:1997] + "..."
+                return text
             else:
                 logger.warning("Gemini API returned empty response")
                 return None
