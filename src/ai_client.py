@@ -146,10 +146,13 @@ class AIClient:
                 text = response.text.strip() if response.text else ""
             except (AttributeError, ValueError) as e:
                 logger.warning(f"Unable to access response.text: {e}")
-                logger.debug(f"Response object: {response}")
                 if hasattr(response, 'candidates') and response.candidates:
-                    logger.debug(f"Candidates: {response.candidates}")
-                    logger.debug(f"First candidate finish_reason: {response.candidates[0].finish_reason}")
+                    candidate = response.candidates[0]
+                    logger.warning(f"Finish reason: {candidate.finish_reason}")
+                    if hasattr(candidate, 'safety_ratings') and candidate.safety_ratings:
+                        logger.warning(f"Safety ratings: {candidate.safety_ratings}")
+                    if candidate.finish_reason == 'SAFETY':
+                        logger.error("Response blocked by safety filter")
                 return None
 
             if not text:
