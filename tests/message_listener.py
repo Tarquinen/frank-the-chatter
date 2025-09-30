@@ -20,7 +20,7 @@ class MessageListener(discord.Client):
             return
             
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        author = message.author.name
+        author = message.author.display_name
         channel_info = f"#{message.channel.name}" if hasattr(message.channel, 'name') else f"Channel {message.channel.id}"
         content = message.content
         
