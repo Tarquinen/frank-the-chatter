@@ -47,10 +47,10 @@ class AIClient:
                 return prompt_path.read_text().strip()
             else:
                 logger.warning("prompt.txt not found, using default system prompt")
-                return "You are Gary, a helpful AI assistant in a Discord chat."
+                return "You are Gary, an AI in a Discord chat."
         except Exception as e:
             logger.error(f"Failed to load system prompt: {e}")
-            return "You are Gary, a helpful AI assistant in a Discord chat."
+            return "You are Gary, an AI in a Discord chat."
 
     async def generate_response(
         self, context_messages: List[dict], user_message: str, mentioned_by: str
@@ -107,21 +107,31 @@ class AIClient:
             ]:  # Use config value for context
                 username = msg.get("username", "Unknown")
                 content = msg.get("content", "")
-                
-                message_text = f"{username}: {content}" if content.strip() else f"{username}:"
-                
+
+                message_text = (
+                    f"{username}: {content}" if content.strip() else f"{username}:"
+                )
+
                 if msg.get("has_attachments") and msg.get("media_files"):
                     try:
-                        attachments = msg["media_files"] if isinstance(msg["media_files"], list) else []
+                        attachments = (
+                            msg["media_files"]
+                            if isinstance(msg["media_files"], list)
+                            else []
+                        )
                         for att in attachments:
-                            url = att.get('url', '')
-                            content_type = att.get('content_type', '')
-                            if url and content_type and content_type.startswith('image/'):
+                            url = att.get("url", "")
+                            content_type = att.get("content_type", "")
+                            if (
+                                url
+                                and content_type
+                                and content_type.startswith("image/")
+                            ):
                                 image_urls.append(url)
                                 message_text += f" [attached image]"
                     except Exception as e:
                         logger.warning(f"Failed to parse media_files: {e}")
-                
+
                 if content.strip() or msg.get("has_attachments"):
                     context_parts.append(message_text)
 
@@ -137,52 +147,57 @@ class AIClient:
         """Download image from URL and upload to Gemini"""
         if not self.client:
             return None
-            
+
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as resp:
                     if resp.status != 200:
-                        logger.warning(f"Failed to download image from {url}: HTTP {resp.status}")
+                        logger.warning(
+                            f"Failed to download image from {url}: HTTP {resp.status}"
+                        )
                         return None
-                    
+
                     image_data = await resp.read()
-                    
-                    with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as tmp_file:
+
+                    with tempfile.NamedTemporaryFile(
+                        delete=False, suffix=".jpg"
+                    ) as tmp_file:
                         tmp_file.write(image_data)
                         tmp_path = tmp_file.name
-                    
+
                     loop = asyncio.get_event_loop()
                     uploaded_file = await loop.run_in_executor(
-                        None,
-                        lambda: self.client.files.upload(file=tmp_path)
+                        None, lambda: self.client.files.upload(file=tmp_path)
                     )
-                    
+
                     Path(tmp_path).unlink()
-                    
+
                     logger.info(f"Uploaded image to Gemini: {uploaded_file.name}")
                     return uploaded_file
-                    
+
         except Exception as e:
             logger.error(f"Failed to download/upload image from {url}: {e}")
             return None
 
-    async def _generate_with_gemini(self, formatted_context: str, image_urls: Optional[List[str]] = None) -> Optional[str]:
+    async def _generate_with_gemini(
+        self, formatted_context: str, image_urls: Optional[List[str]] = None
+    ) -> Optional[str]:
         """Generate response using Gemini API with optional image support"""
         try:
             uploaded_files = []
-            
+
             if image_urls and len(image_urls) > 0:
                 logger.info(f"Processing {len(image_urls)} image(s) for AI request")
                 for url in image_urls[-10:]:
                     uploaded_file = await self._download_and_upload_image(url)
                     if uploaded_file:
                         uploaded_files.append(uploaded_file)
-            
+
             if uploaded_files:
                 content_parts = [formatted_context] + uploaded_files
             else:
                 content_parts = formatted_context
-            
+
             # Create the generation config
             config = types.GenerateContentConfig(
                 system_instruction=self.system_prompt,
@@ -201,13 +216,20 @@ class AIClient:
             response = await loop.run_in_executor(
                 None, self._sync_generate_content, content_parts, config
             )
-            
+
             if self.client:
                 for uploaded_file in uploaded_files:
                     try:
-                        await loop.run_in_executor(None, lambda f=uploaded_file: self.client.files.delete(name=f.name))
+                        await loop.run_in_executor(
+                            None,
+                            lambda f=uploaded_file: self.client.files.delete(
+                                name=f.name
+                            ),
+                        )
                     except Exception as e:
-                        logger.warning(f"Failed to delete uploaded file {uploaded_file.name}: {e}")
+                        logger.warning(
+                            f"Failed to delete uploaded file {uploaded_file.name}: {e}"
+                        )
 
             if not response:
                 logger.warning("Gemini API returned None response")
@@ -217,19 +239,24 @@ class AIClient:
                 text = response.text.strip() if response.text else ""
             except (AttributeError, ValueError) as e:
                 logger.warning(f"Unable to access response.text: {e}")
-                if hasattr(response, 'candidates') and response.candidates:
+                if hasattr(response, "candidates") and response.candidates:
                     candidate = response.candidates[0]
                     logger.warning(f"Finish reason: {candidate.finish_reason}")
-                    if hasattr(candidate, 'safety_ratings') and candidate.safety_ratings:
+                    if (
+                        hasattr(candidate, "safety_ratings")
+                        and candidate.safety_ratings
+                    ):
                         logger.warning(f"Safety ratings: {candidate.safety_ratings}")
-                    if candidate.finish_reason == 'SAFETY':
+                    if candidate.finish_reason == "SAFETY":
                         logger.error("Response blocked by safety filter")
                 return None
 
             if not text:
                 logger.warning("Gemini API returned empty text")
-                if hasattr(response, 'candidates') and response.candidates:
-                    logger.debug(f"Finish reason: {response.candidates[0].finish_reason}")
+                if hasattr(response, "candidates") and response.candidates:
+                    logger.debug(
+                        f"Finish reason: {response.candidates[0].finish_reason}"
+                    )
                 return None
 
             if len(text) > 2000:
@@ -237,7 +264,7 @@ class AIClient:
                     f"Response too long ({len(text)} chars), truncating to 2000"
                 )
                 text = text[:1997] + "..."
-            
+
             return text
 
         except Exception as e:
