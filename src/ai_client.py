@@ -173,7 +173,7 @@ class AIClient:
             
             if image_urls and len(image_urls) > 0:
                 logger.info(f"Processing {len(image_urls)} image(s) for AI request")
-                for url in image_urls[-3:]:
+                for url in image_urls[-10:]:
                     uploaded_file = await self._download_and_upload_image(url)
                     if uploaded_file:
                         uploaded_files.append(uploaded_file)
