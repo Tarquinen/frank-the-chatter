@@ -62,7 +62,7 @@ def show_stats():
                 """
                 SELECT username, MAX(timestamp) as last_message
                 FROM messages 
-                WHERE channel_id = ? AND username != 'friendly_gary'
+                WHERE channel_id = ? AND username != 'Gary'
                 GROUP BY username
                 ORDER BY last_message DESC
                 LIMIT 3
@@ -107,7 +107,7 @@ def show_recent_messages(limit=10):
     with connect_db() as conn:
         cursor = conn.execute(
             """
-            SELECT channel_id, username, content, timestamp, has_attachments
+            SELECT channel_id, username, content, timestamp, has_attachments, media_files
             FROM messages 
             ORDER BY timestamp DESC 
             LIMIT ?
@@ -116,10 +116,22 @@ def show_recent_messages(limit=10):
         )
 
         for row in cursor:
-            channel_id, username, content, timestamp, has_attachments = row
-            media_indicator = " [📎]" if has_attachments else ""
+            channel_id, username, content, timestamp, has_attachments, media_files = row
             content_preview = content[:80] + "..." if len(content) > 80 else content
-            print(f"[{timestamp[:19]}] {username}: {content_preview}{media_indicator}")
+            
+            media_info = ""
+            if has_attachments and media_files:
+                try:
+                    attachments = json.loads(media_files)
+                    urls = [att.get('url', '') for att in attachments if att.get('url')]
+                    if urls:
+                        media_info = f" [📎 {', '.join(urls)}]"
+                    else:
+                        media_info = " [📎]"
+                except:
+                    media_info = " [📎]"
+            
+            print(f"[{timestamp[:19]}] {username}: {content_preview}{media_info}")
 
 
 def show_channel_messages(channel_id, limit=10):
@@ -350,4 +362,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
