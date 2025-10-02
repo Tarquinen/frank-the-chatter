@@ -254,9 +254,10 @@ class AIClient:
             if not text:
                 logger.warning("Gemini API returned empty text")
                 if hasattr(response, "candidates") and response.candidates:
-                    logger.debug(
-                        f"Finish reason: {response.candidates[0].finish_reason}"
-                    )
+                    candidate = response.candidates[0]
+                    logger.warning(f"Finish reason: {candidate.finish_reason}")
+                    if hasattr(candidate, "safety_ratings") and candidate.safety_ratings:
+                        logger.warning(f"Safety ratings: {candidate.safety_ratings}")
                 return None
 
             if len(text) > 2000:
