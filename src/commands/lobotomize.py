@@ -108,6 +108,7 @@ class LobotomizeCommand:
                 )
             else:
                 limit = limit if limit is not None else Config.MAX_MESSAGE_CONTEXT_FOR_AI
+                limit += 2
                 deleted_count = self.message_storage.delete_recent_messages(
                     channel_id, limit
                 )
