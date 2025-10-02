@@ -122,6 +122,39 @@ class MessageDatabase:
             # Return in chronological order (oldest first)
             return list(reversed(messages))
     
+    def delete_recent_messages(self, channel_id: str, limit: int) -> int:
+        """
+        Delete the most recent N messages from a channel
+        
+        Args:
+            channel_id: Discord channel ID
+            limit: Number of recent messages to delete
+            
+        Returns:
+            Number of messages deleted
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute('''
+                SELECT id FROM messages 
+                WHERE channel_id = ?
+                ORDER BY timestamp DESC
+                LIMIT ?
+            ''', (channel_id, limit))
+            
+            message_ids = [row[0] for row in cursor.fetchall()]
+            
+            if message_ids:
+                placeholders = ','.join('?' * len(message_ids))
+                conn.execute(f'''
+                    DELETE FROM messages 
+                    WHERE id IN ({placeholders})
+                ''', message_ids)
+                
+                conn.commit()
+                return len(message_ids)
+            
+            return 0
+    
     def cleanup_old_messages(self, channel_id: str, keep_last: int = 1000):
         """
         Remove old messages from a channel, keeping only the most recent ones

@@ -99,6 +99,25 @@ class MessageStorage:
             logger.error(f"Failed to get messages from channel {channel_id}: {e}")
             return []
     
+    def delete_recent_messages(self, channel_id: str, limit: int) -> int:
+        """
+        Delete the most recent N messages from a channel
+        
+        Args:
+            channel_id: Discord channel ID (string)
+            limit: Number of recent messages to delete
+            
+        Returns:
+            Number of messages deleted
+        """
+        try:
+            deleted_count = self.db.delete_recent_messages(channel_id, limit)
+            logger.info(f"Deleted {deleted_count} recent messages from channel {channel_id}")
+            return deleted_count
+        except Exception as e:
+            logger.error(f"Failed to delete messages from channel {channel_id}: {e}")
+            return 0
+    
     def update_conversation(self, channel_id: str, channel_name: str):
         """
         Update conversation metadata

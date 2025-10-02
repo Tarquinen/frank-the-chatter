@@ -9,6 +9,7 @@ sys.path.append(str(Path(__file__).parent))
 
 from message_storage import MessageStorage
 from ai_client import AIClient
+from commands import CommandHandler
 
 # Validate configuration
 Config.validate()
@@ -28,6 +29,10 @@ class FrankBot(discord.Client):
         self.ai_client = AIClient()
         ai_info = self.ai_client.get_model_info()
         logger.info(f"AI client initialized - Model: {ai_info['model']}, Available: {ai_info['available']}")
+        
+        # Initialize command handler
+        self.command_handler = CommandHandler(self.message_storage)
+        logger.info("Command handler initialized")
         
     async def on_ready(self):
         """Called when bot connects successfully"""
@@ -80,11 +85,22 @@ class FrankBot(discord.Client):
             logger.error(f"Failed to store message: {e}")
         
     async def _handle_mention(self, message):
-        """Handle when bot is mentioned - now with AI integration"""
-        # Show typing indicator immediately
-        async with message.channel.typing():
-            channel_id = str(message.channel.id)
+        """Handle when bot is mentioned - now with AI integration and commands"""
+        channel_id = str(message.channel.id)
+        
+        # Check for commands first
+        parsed_command = self.command_handler.parse_command(message.content)
+        if parsed_command:
+            command_name, args = parsed_command
+            logger.info(f"Command detected: !{command_name} by {message.author.display_name} (ID: {message.author.id})")
             
+            command_response = await self.command_handler.handle_command(message, command_name, args)
+            if command_response:
+                await message.channel.send(command_response)
+                return
+        
+        # Show typing indicator immediately for AI responses
+        async with message.channel.typing():
             # Get recent messages from database for context
             recent_messages = self.message_storage.get_recent_messages(channel_id, Config.MAX_MESSAGE_CONTEXT_FOR_AI)
             
