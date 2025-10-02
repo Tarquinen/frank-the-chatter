@@ -53,14 +53,13 @@ class AIClient:
             return "You are Gary, an AI in a Discord chat."
 
     async def generate_response(
-        self, context_messages: List[dict], user_message: str, mentioned_by: str
+        self, context_messages: List[dict], mentioned_by: str
     ) -> Optional[str]:
         """
         Generate an AI response based on conversation context
 
         Args:
-            context_messages: List of recent messages from database
-            user_message: The message that mentioned the bot
+            context_messages: List of recent messages from database (including the mention)
             mentioned_by: Username who mentioned the bot
 
         Returns:
@@ -73,7 +72,7 @@ class AIClient:
         try:
             # Format conversation context for AI
             formatted_context, image_urls = self._format_context_for_ai(
-                context_messages, user_message, mentioned_by
+                context_messages, mentioned_by
             )
 
             # Generate response using Gemini
@@ -93,7 +92,7 @@ class AIClient:
             return f"Hi {mentioned_by}! I'm having some trouble with my AI right now, but I'm still here!"
 
     def _format_context_for_ai(
-        self, context_messages: List[dict], user_message: str, mentioned_by: str
+        self, context_messages: List[dict], mentioned_by: str
     ):
         """Format conversation context for the AI model, extracting image URLs"""
         context_parts = []
@@ -135,10 +134,7 @@ class AIClient:
                 if content.strip() or msg.get("has_attachments"):
                     context_parts.append(message_text)
 
-        # Add current mention
-        context_parts.append(
-            f"\n{mentioned_by} just mentioned you with: {user_message}"
-        )
+        # Add instruction for response
         context_parts.append(f"\nPlease respond as Gary to {mentioned_by}.")
 
         return "\n".join(context_parts), image_urls

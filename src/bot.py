@@ -94,7 +94,6 @@ class FrankBot(discord.Client):
             try:
                 ai_response = await self.ai_client.generate_response(
                     context_messages=recent_messages,
-                    user_message=message.content,
                     mentioned_by=message.author.display_name
                 )
                 
