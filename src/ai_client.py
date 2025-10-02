@@ -258,6 +258,8 @@ class AIClient:
                     logger.warning(f"Finish reason: {candidate.finish_reason}")
                     if hasattr(candidate, "safety_ratings") and candidate.safety_ratings:
                         logger.warning(f"Safety ratings: {candidate.safety_ratings}")
+                else:
+                    logger.warning(f"No candidates in response. Response type: {type(response)}")
                 return None
 
             if len(text) > 2000:

@@ -18,11 +18,6 @@ logger = setup_logger()
 
 class FrankBot(discord.Client):
     def __init__(self):
-        # Set up intents for message content and guild messages
-        # intents = discord.Intents.default()
-        # intents.message_content = True
-        # intents.guilds = True
-        
         super().__init__()
         
         # Initialize database storage (Phase 2)
