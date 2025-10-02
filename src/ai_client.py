@@ -201,7 +201,7 @@ class AIClient:
             # Create the generation config
             config = types.GenerateContentConfig(
                 system_instruction=self.system_prompt,
-                max_output_tokens=min(Config.AI_MAX_TOKENS, 500),
+                max_output_tokens=Config.AI_MAX_TOKENS,
                 temperature=1,
                 top_p=0.95,
                 top_k=20,
