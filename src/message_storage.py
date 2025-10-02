@@ -118,6 +118,24 @@ class MessageStorage:
             logger.error(f"Failed to delete messages from channel {channel_id}: {e}")
             return 0
     
+    def delete_all_channel_messages(self, channel_id: str) -> int:
+        """
+        Delete ALL messages from a channel and remove conversation record
+        
+        Args:
+            channel_id: Discord channel ID (string)
+            
+        Returns:
+            Number of messages deleted
+        """
+        try:
+            deleted_count = self.db.delete_all_channel_messages(channel_id)
+            logger.info(f"Deleted ALL {deleted_count} messages from channel {channel_id} and removed conversation record")
+            return deleted_count
+        except Exception as e:
+            logger.error(f"Failed to delete all messages from channel {channel_id}: {e}")
+            return 0
+    
     def update_conversation(self, channel_id: str, channel_name: str):
         """
         Update conversation metadata
