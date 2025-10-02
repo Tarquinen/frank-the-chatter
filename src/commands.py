@@ -113,12 +113,13 @@ class CommandHandler:
         return random.choice(responses)
 
     def get_lobotomize_response(self) -> str:
-        """Get a random witty response for the lobotomize command (placeholder)"""
+        """Get a random processing message for the lobotomize command (shown before count)"""
         responses = [
-            "*blanks out* ...wait, what were we talking about?",
-            "Memory wiped. What messages?",
-            "Lobotomy complete. I feel... lighter?",
-            "Done. Neural pathways scrubbed. Feels weird.",
-            "*BZZT* Memory banks cleared.",
+            "⚡ Initiating neural purge...",
+            "🧠 Scrubbing memory banks...",
+            "💭 Forgetting everything...",
+            "🔄 Processing lobotomy request...",
+            "⌛ Erasing recent memories...",
+            "🗑️ Dumping conversation history...",
         ]
         return random.choice(responses)
