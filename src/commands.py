@@ -1,6 +1,6 @@
 """Command system for Frank the Chatter bot"""
 
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict, Any
 from utils.config import Config
 from utils.logger import setup_logger
 import random
@@ -39,20 +39,23 @@ class CommandHandler:
         
         return None
     
-    async def handle_command(self, message, command_name: str, args: list) -> Optional[str]:
+    async def handle_command(self, message, command_name: str, args: list) -> Optional[Dict[str, Any]]:
         """
-        Execute a command and return response
+        Execute a command and return response with metadata
         
         Returns:
-            Response string if command was handled, None if command not found
+            Dict with 'response' and optional metadata, or None if command not found
         """
         user_id = str(message.author.id)
         
         if not self.is_authorized(user_id):
-            return self._get_unauthorized_response()
+            return {'response': self._get_unauthorized_response()}
         
         if command_name == "lobotomize":
-            return await self._cmd_lobotomize(message)
+            return {
+                'response': self.get_lobotomize_response(),
+                'execute_after_send': self._cmd_lobotomize
+            }
         
         return None
     
@@ -68,27 +71,32 @@ class CommandHandler:
         ]
         return random.choice(responses)
     
-    async def _cmd_lobotomize(self, message) -> str:
-        """Delete recent messages from channel (lobotomize command)"""
+    async def _cmd_lobotomize(self, message, sent_message) -> None:
+        """
+        Delete recent messages from channel (lobotomize command)
+        This is called AFTER the response message has been sent and stored
+        
+        Args:
+            message: The original command message
+            sent_message: The bot's response message (to be included in deletion)
+        """
         channel_id = str(message.channel.id)
         limit = Config.MAX_MESSAGE_CONTEXT_FOR_AI
         
         try:
             deleted_count = self.message_storage.delete_recent_messages(channel_id, limit)
-            
-            if deleted_count == 0:
-                return "My memory was already blank here. Nothing to forget!"
-            
-            responses = [
-                f"*blanks out* ...wait, what were we talking about? ({deleted_count} messages yeeted from my brain)",
-                f"Memory wiped. The last {deleted_count} messages? Never heard of 'em.",
-                f"Lobotomy complete. {deleted_count} messages vanished into the void. I feel... lighter?",
-                f"Done. {deleted_count} messages scrubbed from my neural pathways. Feels weird.",
-                f"*BZZT* Memory banks cleared. {deleted_count} messages? What messages?",
-            ]
-            
-            return random.choice(responses)
+            logger.info(f"Lobotomize: deleted {deleted_count} messages including command and response")
             
         except Exception as e:
             logger.error(f"Error executing lobotomize command: {e}")
-            return f"Uh oh, something went wrong during the lobotomy. My brain hurts. Error: {e}"
+    
+    def get_lobotomize_response(self) -> str:
+        """Get a random witty response for the lobotomize command"""
+        responses = [
+            "*blanks out* ...wait, what were we talking about?",
+            "Memory wiped. What messages?",
+            "Lobotomy complete. I feel... lighter?",
+            "Done. Neural pathways scrubbed. Feels weird.",
+            "*BZZT* Memory banks cleared.",
+        ]
+        return random.choice(responses)

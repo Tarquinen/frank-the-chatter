@@ -94,9 +94,13 @@ class FrankBot(discord.Client):
             command_name, args = parsed_command
             logger.info(f"Command detected: !{command_name} by {message.author.display_name} (ID: {message.author.id})")
             
-            command_response = await self.command_handler.handle_command(message, command_name, args)
-            if command_response:
-                await message.channel.send(command_response)
+            command_result = await self.command_handler.handle_command(message, command_name, args)
+            if command_result:
+                sent_message = await message.channel.send(command_result['response'])
+                
+                if 'execute_after_send' in command_result:
+                    await command_result['execute_after_send'](message, sent_message)
+                
                 return
         
         # Show typing indicator immediately for AI responses
