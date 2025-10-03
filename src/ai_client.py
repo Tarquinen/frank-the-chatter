@@ -76,7 +76,7 @@ class AIClient:
             )
 
             # Generate response using Gemini
-            response = await self._generate_with_gemini(formatted_context, image_urls)
+            response = await self._generate_conversation_response(formatted_context, image_urls)
 
             if response:
                 logger.info(
@@ -175,10 +175,15 @@ class AIClient:
             logger.error(f"Failed to download/upload image from {url}: {e}")
             return None
 
-    async def _generate_with_gemini(
-        self, formatted_context: str, image_urls: Optional[List[str]] = None
+    async def _generate_with_config(
+        self,
+        formatted_context: str,
+        system_prompt: str,
+        image_urls: Optional[List[str]] = None,
+        enable_tools: bool = True,
+        temperature: float = 1.0,
     ) -> Optional[str]:
-        """Generate response using Gemini API with optional image support"""
+        """Generate response using Gemini API with configurable options"""
         try:
             uploaded_files = []
 
@@ -194,18 +199,13 @@ class AIClient:
             else:
                 content_parts = formatted_context
 
-            # Create the generation config
-            config = types.GenerateContentConfig(
-                system_instruction=self.system_prompt,
-                max_output_tokens=Config.AI_MAX_TOKENS,
-                temperature=1,
-                top_p=0.95,
-                top_k=20,
-                tools=[
-                    types.Tool(google_search=types.GoogleSearch()),
-                    types.Tool(code_execution=types.ToolCodeExecution()),
-                ],
-                safety_settings=[
+            config_kwargs = {
+                "system_instruction": system_prompt,
+                "max_output_tokens": Config.AI_MAX_TOKENS,
+                "temperature": temperature,
+                "top_p": 0.95,
+                "top_k": 20,
+                "safety_settings": [
                     types.SafetySetting(
                         category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
                         threshold=types.HarmBlockThreshold.BLOCK_NONE
@@ -223,9 +223,16 @@ class AIClient:
                         threshold=types.HarmBlockThreshold.BLOCK_NONE
                     ),
                 ],
-            )
+            }
 
-            # Run the synchronous API call in a thread pool to avoid blocking
+            if enable_tools:
+                config_kwargs["tools"] = [
+                    types.Tool(google_search=types.GoogleSearch()),
+                    types.Tool(code_execution=types.ToolCodeExecution()),
+                ]
+
+            config = types.GenerateContentConfig(**config_kwargs)
+
             loop = asyncio.get_event_loop()
             response = await loop.run_in_executor(
                 None, self._sync_generate_content, content_parts, config
@@ -288,6 +295,18 @@ class AIClient:
             logger.error(f"Gemini API error: {e}", exc_info=True)
             return None
 
+    async def _generate_conversation_response(
+        self, formatted_context: str, image_urls: Optional[List[str]] = None
+    ) -> Optional[str]:
+        """Generate conversational response with tools and image support enabled"""
+        return await self._generate_with_config(
+            formatted_context=formatted_context,
+            system_prompt=self.system_prompt,
+            image_urls=image_urls,
+            enable_tools=True,
+            temperature=1.0,
+        )
+
     def _sync_generate_content(self, content, config: types.GenerateContentConfig):
         """Synchronous wrapper for Gemini API call"""
         if self.client:
@@ -347,40 +366,13 @@ class AIClient:
             
             logger.info(f"Formatted context length: {len(formatted_context)} characters")
             
-            config = types.GenerateContentConfig(
-                system_instruction=summarize_prompt,
-                max_output_tokens=Config.AI_MAX_TOKENS,
-                temperature=0.7,
-                top_p=0.95,
-                top_k=20,
+            return await self._generate_with_config(
+                formatted_context=formatted_context,
+                system_prompt=summarize_prompt,
+                image_urls=None,
+                enable_tools=False,
+                temperature=1.0,
             )
-            
-            logger.info("Calling Gemini API for summary generation")
-            loop = asyncio.get_event_loop()
-            response = await loop.run_in_executor(
-                None, self._sync_generate_content, formatted_context, config
-            )
-            logger.info("Gemini API call completed")
-            
-            if not response:
-                logger.warning("Gemini API returned None response for summary")
-                return None
-            
-            try:
-                text = response.text.strip() if response.text else ""
-            except (AttributeError, ValueError) as e:
-                logger.warning(f"Unable to access response.text for summary: {e}")
-                return None
-            
-            if not text:
-                logger.warning("Gemini API returned empty text for summary")
-                return None
-            
-            if len(text) > 2000:
-                logger.warning(f"Summary too long ({len(text)} chars), truncating to 2000")
-                text = text[:1997] + "..."
-            
-            return text
             
         except Exception as e:
             logger.error(f"Error generating summary: {e}", exc_info=True)
