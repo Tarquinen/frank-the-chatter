@@ -5,6 +5,7 @@ from utils.logger import setup_logger
 import random
 
 from .lobotomize import LobotomizeCommand
+from .commands import CommandsCommand
 
 logger = setup_logger(__name__)
 
@@ -18,6 +19,7 @@ class CommandHandler:
         self.message_storage = message_storage
         self.commands = {
             "lobotomize": LobotomizeCommand(message_storage),
+            "commands": CommandsCommand(),
         }
 
     def is_authorized(self, user_id: str) -> bool:
@@ -52,15 +54,18 @@ class CommandHandler:
         Returns:
             Dict with 'response' and optional metadata, or None if command not found
         """
-        user_id = str(message.author.id)
-
-        if not self.is_authorized(user_id):
-            return {"response": self._get_unauthorized_response()}
-
         if command_name not in self.commands:
             return None
 
         command = self.commands[command_name]
+        user_id = str(message.author.id)
+        is_authorized = self.is_authorized(user_id)
+
+        if command.requires_auth and not is_authorized:
+            return {"response": self._get_unauthorized_response()}
+
+        if command_name == "commands":
+            return {"response": command.get_response(is_authorized)}
 
         if command_name == "lobotomize":
             parsed = command.parse_args(args)

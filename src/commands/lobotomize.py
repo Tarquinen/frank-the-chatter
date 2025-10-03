@@ -14,6 +14,7 @@ class LobotomizeCommand:
     def __init__(self, message_storage):
         self.message_storage = message_storage
         self.name = "lobotomize"
+        self.requires_auth = True
 
     def parse_args(self, args: list) -> Dict[str, Any]:
         """
