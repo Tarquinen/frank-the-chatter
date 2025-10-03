@@ -26,17 +26,17 @@ class CommandsCommand:
         commands_info = [
             {
                 "name": "!summarize [count|today|yesterday]",
-                "description": "Generate AI summary of conversation history",
+                "description": "Gary provides a thoughtful recap of the conversation",
                 "permission": "anyone",
             },
             {
                 "name": "!bh (be helpful)",
-                "description": "Switch to helpful mode (no personality, just useful assistance)",
+                "description": "Larry takes Gary's seat, and he just wants to help you",
                 "permission": "anyone",
             },
             {
                 "name": "!lobotomize [count|all]",
-                "description": "Delete messages from bot's memory",
+                "description": "Wipe Gary's memory clean (careful with this one)",
                 "permission": "dan only",
             },
         ]
