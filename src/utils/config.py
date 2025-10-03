@@ -4,11 +4,16 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 
-# Get project root directory (parent of src/)
-PROJECT_ROOT = Path(__file__).parent.parent.parent
+# Get project root directory
+PROJECT_ROOT = Path.cwd()
 
 # Load environment variables from project root
 load_dotenv(PROJECT_ROOT / ".env")
+
+# Prompt file paths
+PROMPT_DIR = PROJECT_ROOT / "prompts"
+CONVERSATION_PROMPT_PATH = PROMPT_DIR / "conversation.txt"
+SUMMARIZE_PROMPT_PATH = PROMPT_DIR / "summarize.txt"
 
 
 class Config:

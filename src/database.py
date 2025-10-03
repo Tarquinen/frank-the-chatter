@@ -270,6 +270,40 @@ class MessageDatabase:
             
             return deleted_count
     
+    def get_messages_by_date_range(self, channel_id: str, start_date: datetime, end_date: datetime) -> List[Dict[str, Any]]:
+        """
+        Get messages within a specific date range
+        
+        Args:
+            channel_id: Discord channel ID
+            start_date: Start of date range (inclusive)
+            end_date: End of date range (exclusive)
+            
+        Returns:
+            List of message dictionaries in chronological order
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.execute('''
+                SELECT username, content, timestamp, has_attachments, media_files
+                FROM messages 
+                WHERE channel_id = ? AND timestamp >= ? AND timestamp < ?
+                ORDER BY timestamp ASC
+            ''', (channel_id, start_date, end_date))
+            
+            messages = []
+            for row in cursor.fetchall():
+                message = {
+                    'username': row['username'],
+                    'content': row['content'],
+                    'timestamp': row['timestamp'],
+                    'has_attachments': bool(row['has_attachments']),
+                    'media_files': json.loads(row['media_files']) if row['media_files'] else []
+                }
+                messages.append(message)
+            
+            return messages
+    
     def cleanup_if_database_too_large(self, max_size_gb: float = 15.0):
         """
         Perform cleanup if database exceeds size limit

@@ -2,7 +2,7 @@
 
 import google.genai as genai
 from google.genai import types
-from utils.config import Config
+from utils.config import Config, PROMPT_DIR
 from utils.logger import setup_logger
 from pathlib import Path
 import asyncio
@@ -39,14 +39,14 @@ class AIClient:
             logger.error(f"Failed to initialize AI client: {e}")
             self.client = None
 
-    def _load_system_prompt(self) -> str:
-        """Load the system prompt from config file"""
+    def _load_system_prompt(self, prompt_file: str = "conversation.txt") -> str:
+        """Load a system prompt from prompts directory"""
         try:
-            prompt_path = Path(__file__).parent.parent / "config" / "prompt.txt"
+            prompt_path = PROMPT_DIR / prompt_file
             if prompt_path.exists():
                 return prompt_path.read_text().strip()
             else:
-                logger.warning("prompt.txt not found, using default system prompt")
+                logger.warning(f"{prompt_file} not found, using default system prompt")
                 return "You are Gary, an AI in a Discord chat."
         except Exception as e:
             logger.error(f"Failed to load system prompt: {e}")
@@ -299,6 +299,86 @@ class AIClient:
     def is_available(self) -> bool:
         """Check if AI client is available and configured"""
         return self.client is not None
+
+    async def generate_summary(self, messages: List[dict]) -> Optional[str]:
+        """
+        Generate a conversation summary using summarize.txt prompt
+        
+        Args:
+            messages: List of messages to summarize
+        
+        Returns:
+            Summary text or None if AI unavailable
+        """
+        if not self.client:
+            logger.warning("AI client not available for summarization")
+            return None
+        
+        try:
+            summarize_prompt = self._load_system_prompt("summarize.txt")
+            
+            context_parts = ["Conversation history to summarize:\n"]
+            for msg in messages:
+                timestamp = msg.get("timestamp", "")
+                username = msg.get("username", "Unknown")
+                content = msg.get("content", "")
+                
+                if timestamp:
+                    try:
+                        from datetime import datetime
+                        dt = datetime.fromisoformat(timestamp) if isinstance(timestamp, str) else timestamp
+                        time_str = dt.strftime("%H:%M")
+                    except:
+                        time_str = "??:??"
+                else:
+                    time_str = "??:??"
+                
+                message_line = f"[{time_str}] {username}: {content}"
+                
+                if msg.get("has_attachments"):
+                    message_line += " [attached media]"
+                
+                context_parts.append(message_line)
+            
+            context_parts.append("\nPlease provide a summary of this conversation.")
+            formatted_context = "\n".join(context_parts)
+            
+            config = types.GenerateContentConfig(
+                system_instruction=summarize_prompt,
+                max_output_tokens=Config.AI_MAX_TOKENS,
+                temperature=0.7,
+                top_p=0.95,
+                top_k=20,
+            )
+            
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None, self._sync_generate_content, formatted_context, config
+            )
+            
+            if not response:
+                logger.warning("Gemini API returned None response for summary")
+                return None
+            
+            try:
+                text = response.text.strip() if response.text else ""
+            except (AttributeError, ValueError) as e:
+                logger.warning(f"Unable to access response.text for summary: {e}")
+                return None
+            
+            if not text:
+                logger.warning("Gemini API returned empty text for summary")
+                return None
+            
+            if len(text) > 2000:
+                logger.warning(f"Summary too long ({len(text)} chars), truncating to 2000")
+                text = text[:1997] + "..."
+            
+            return text
+            
+        except Exception as e:
+            logger.error(f"Error generating summary: {e}", exc_info=True)
+            return None
 
     def get_model_info(self) -> dict:
         """Get information about the current AI model"""

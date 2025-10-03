@@ -31,6 +31,12 @@ class CommandsCommand:
                 "permission": "anyone",
             },
             {
+                "name": "!summarize",
+                "description": "Generate AI summary of conversation history",
+                "usage": "!summarize [count|today|yesterday]",
+                "permission": "anyone",
+            },
+            {
                 "name": "!lobotomize",
                 "description": "Delete messages from bot's memory",
                 "usage": "!lobotomize [count|all]",

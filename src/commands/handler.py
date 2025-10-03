@@ -6,6 +6,7 @@ import random
 
 from .lobotomize import LobotomizeCommand
 from .commands import CommandsCommand
+from .summarize import SummarizeCommand
 
 logger = setup_logger(__name__)
 
@@ -15,11 +16,13 @@ AUTHORIZED_USER_ID = "140442303176245248"
 class CommandHandler:
     """Handles bot commands that bypass AI responses"""
 
-    def __init__(self, message_storage):
+    def __init__(self, message_storage, ai_client):
         self.message_storage = message_storage
+        self.ai_client = ai_client
         self.commands = {
             "lobotomize": LobotomizeCommand(message_storage),
             "commands": CommandsCommand(),
+            "summarize": SummarizeCommand(message_storage, ai_client),
         }
 
     def is_authorized(self, user_id: str) -> bool:
@@ -66,6 +69,9 @@ class CommandHandler:
 
         if command_name == "commands":
             return {"response": command.get_response(is_authorized)}
+
+        if command_name == "summarize":
+            return {"response": await command.execute(message, args)}
 
         if command_name == "lobotomize":
             parsed = command.parse_args(args)
