@@ -99,6 +99,26 @@ class MessageStorage:
             logger.error(f"Failed to get messages from channel {channel_id}: {e}")
             return []
     
+    def get_messages_by_date_range(self, channel_id: str, start_date: datetime, end_date: datetime) -> List[Dict[str, Any]]:
+        """
+        Get messages within a specific date range
+        
+        Args:
+            channel_id: Discord channel ID (string)
+            start_date: Start of date range (inclusive)
+            end_date: End of date range (exclusive)
+            
+        Returns:
+            List of message dictionaries in chronological order
+        """
+        try:
+            messages = self.db.get_messages_by_date_range(channel_id, start_date, end_date)
+            logger.debug(f"Retrieved {len(messages)} messages from channel {channel_id} between {start_date} and {end_date}")
+            return messages
+        except Exception as e:
+            logger.error(f"Failed to get messages by date range from channel {channel_id}: {e}")
+            return []
+    
     def delete_recent_messages(self, channel_id: str, limit: int) -> int:
         """
         Delete the most recent N messages from a channel
