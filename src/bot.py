@@ -87,13 +87,14 @@ class FrankBot(discord.Client):
         """Handle when bot is mentioned - now with AI integration and commands"""
         channel_id = str(message.channel.id)
         
-        # Check for commands first
-        parsed_command = self.command_handler.parse_command(message.content)
-        if parsed_command:
-            command_name, args = parsed_command
-            logger.info(f"Command detected: !{command_name} by {message.author.display_name} (ID: {message.author.id})")
-            
-            async with message.channel.typing():
+        # Show typing indicator immediately
+        async with message.channel.typing():
+            # Check for commands first
+            parsed_command = self.command_handler.parse_command(message.content)
+            if parsed_command:
+                command_name, args = parsed_command
+                logger.info(f"Command detected: !{command_name} by {message.author.display_name} (ID: {message.author.id})")
+                
                 command_result = await self.command_handler.handle_command(message, command_name, args)
                 if command_result:
                     sent_message = await message.channel.send(command_result['response'])
@@ -102,9 +103,6 @@ class FrankBot(discord.Client):
                         await command_result['execute_after_send'](message, sent_message)
                     
                     return
-        
-        # Show typing indicator immediately for AI responses
-        async with message.channel.typing():
             # Get recent messages from database for context
             recent_messages = self.message_storage.get_recent_messages(channel_id, Config.MAX_MESSAGE_CONTEXT_FOR_AI)
             
