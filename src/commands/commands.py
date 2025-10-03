@@ -27,19 +27,16 @@ class CommandsCommand:
             {
                 "name": "!commands",
                 "description": "List all available commands",
-                "usage": "!commands",
                 "permission": "anyone",
             },
             {
-                "name": "!summarize",
+                "name": "!summarize [count|today|yesterday]",
                 "description": "Generate AI summary of conversation history",
-                "usage": "!summarize [count|today|yesterday]",
                 "permission": "anyone",
             },
             {
-                "name": "!lobotomize",
+                "name": "!lobotomize [count|all]",
                 "description": "Delete messages from bot's memory",
-                "usage": "!lobotomize [count|all]",
                 "permission": "dan only",
             },
         ]
@@ -52,7 +49,6 @@ class CommandsCommand:
 
             response_lines.append(f"**{cmd['name']}**")
             response_lines.append(f"  • {cmd['description']}")
-            response_lines.append(f"  • Usage: `{cmd['usage']}`")
             response_lines.append(f"  • Permission: {cmd['permission']}")
             response_lines.append("")
 
