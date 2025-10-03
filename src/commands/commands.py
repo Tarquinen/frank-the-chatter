@@ -25,11 +25,6 @@ class CommandsCommand:
         """
         commands_info = [
             {
-                "name": "!commands",
-                "description": "List all available commands",
-                "permission": "anyone",
-            },
-            {
                 "name": "!summarize [count|today|yesterday]",
                 "description": "Generate AI summary of conversation history",
                 "permission": "anyone",
