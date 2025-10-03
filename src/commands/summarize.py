@@ -1,5 +1,5 @@
 from typing import Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -47,11 +47,11 @@ class SummarizeCommand:
             if parsed["type"] == "count":
                 messages = self.message_storage.get_recent_messages(channel_id, parsed["value"])
             elif parsed["type"] == "today":
-                now = datetime.utcnow()
+                now = datetime.now(timezone.utc)
                 start = now - timedelta(hours=24)
                 messages = self.message_storage.get_messages_by_date_range(channel_id, start, now)
             elif parsed["type"] == "yesterday":
-                now = datetime.utcnow()
+                now = datetime.now(timezone.utc)
                 yesterday_end = now - timedelta(hours=24)
                 yesterday_start = now - timedelta(hours=48)
                 messages = self.message_storage.get_messages_by_date_range(channel_id, yesterday_start, yesterday_end)

@@ -30,6 +30,11 @@ class CommandsCommand:
                 "permission": "anyone",
             },
             {
+                "name": "!bh (be helpful)",
+                "description": "Switch to helpful mode (no personality, just useful assistance)",
+                "permission": "anyone",
+            },
+            {
                 "name": "!lobotomize [count|all]",
                 "description": "Delete messages from bot's memory",
                 "permission": "dan only",

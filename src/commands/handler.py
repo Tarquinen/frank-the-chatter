@@ -7,6 +7,7 @@ import random
 from .lobotomize import LobotomizeCommand
 from .commands import CommandsCommand
 from .summarize import SummarizeCommand
+from .be_helpful import BeHelpfulCommand
 
 logger = setup_logger(__name__)
 
@@ -23,6 +24,7 @@ class CommandHandler:
             "lobotomize": LobotomizeCommand(message_storage),
             "commands": CommandsCommand(),
             "summarize": SummarizeCommand(message_storage, ai_client),
+            "bh": BeHelpfulCommand(message_storage, ai_client),
         }
 
     def is_authorized(self, user_id: str) -> bool:
@@ -72,6 +74,9 @@ class CommandHandler:
 
         if command_name == "summarize":
             return {"response": await command.execute(message, args)}
+
+        if command_name == "bh":
+            return {"response": await command.execute(message)}
 
         if command_name == "lobotomize":
             parsed = command.parse_args(args)
