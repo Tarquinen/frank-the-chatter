@@ -47,13 +47,13 @@ class SummarizeCommand:
             if parsed["type"] == "count":
                 messages = self.message_storage.get_recent_messages(channel_id, parsed["value"])
             elif parsed["type"] == "today":
-                today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-                today_end = datetime.utcnow()
-                messages = self.message_storage.get_messages_by_date_range(channel_id, today_start, today_end)
+                now = datetime.utcnow()
+                start = now - timedelta(hours=24)
+                messages = self.message_storage.get_messages_by_date_range(channel_id, start, now)
             elif parsed["type"] == "yesterday":
-                today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-                yesterday_start = today_start - timedelta(days=1)
-                yesterday_end = today_start
+                now = datetime.utcnow()
+                yesterday_end = now - timedelta(hours=24)
+                yesterday_start = now - timedelta(hours=48)
                 messages = self.message_storage.get_messages_by_date_range(channel_id, yesterday_start, yesterday_end)
             else:
                 return "An unexpected error occurred."
