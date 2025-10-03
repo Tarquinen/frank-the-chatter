@@ -27,8 +27,6 @@ class FrankBot(discord.Client):
         
         # Initialize AI client (Phase 3)
         self.ai_client = AIClient()
-        ai_info = self.ai_client.get_model_info()
-        logger.info(f"AI client initialized - Model: {ai_info['model']}, Available: {ai_info['available']}")
         
         # Initialize command handler
         self.command_handler = CommandHandler(self.message_storage, self.ai_client)
