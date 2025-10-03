@@ -51,7 +51,8 @@ class FrankBot(discord.Client):
         logger.info(f"Database contains {len(stats)} tracked conversations")
         logger.info(f"Database size: {db_info.get('size_mb', 0):.1f}MB, Total messages: {db_info.get('total_messages', 0)}")
         for stat in stats[:5]:  # Show top 5 active channels
-            logger.info(f"  Channel {stat['channel_id']}: {stat['message_count']} messages")
+            channel_name = stat.get('channel_name', 'Unknown')
+            logger.info(f"  Channel {channel_name} ({stat['channel_id']}): {stat['message_count']} messages")
             
     async def on_message(self, message):
         """Handle incoming messages"""
