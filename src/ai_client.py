@@ -315,6 +315,7 @@ class AIClient:
             return None
         
         try:
+            logger.info(f"Loading summarize prompt and formatting {len(messages)} messages")
             summarize_prompt = self._load_system_prompt("summarize.txt")
             
             context_parts = ["Conversation history to summarize:\n"]
@@ -328,7 +329,8 @@ class AIClient:
                         from datetime import datetime
                         dt = datetime.fromisoformat(timestamp) if isinstance(timestamp, str) else timestamp
                         time_str = dt.strftime("%H:%M")
-                    except:
+                    except Exception as te:
+                        logger.debug(f"Failed to parse timestamp {timestamp}: {te}")
                         time_str = "??:??"
                 else:
                     time_str = "??:??"
@@ -343,6 +345,8 @@ class AIClient:
             context_parts.append("\nPlease provide a summary of this conversation.")
             formatted_context = "\n".join(context_parts)
             
+            logger.info(f"Formatted context length: {len(formatted_context)} characters")
+            
             config = types.GenerateContentConfig(
                 system_instruction=summarize_prompt,
                 max_output_tokens=Config.AI_MAX_TOKENS,
@@ -351,10 +355,12 @@ class AIClient:
                 top_k=20,
             )
             
+            logger.info("Calling Gemini API for summary generation")
             loop = asyncio.get_event_loop()
             response = await loop.run_in_executor(
                 None, self._sync_generate_content, formatted_context, config
             )
+            logger.info("Gemini API call completed")
             
             if not response:
                 logger.warning("Gemini API returned None response for summary")

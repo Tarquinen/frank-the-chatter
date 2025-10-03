@@ -36,38 +36,46 @@ class SummarizeCommand:
                 return {"type": "error", "error": f"Invalid argument '{arg}'. Usage: !summarize [count|today|yesterday]"}
     
     async def execute(self, message, args: list) -> str:
-        parsed = self.parse_args(args)
-        
-        if parsed["type"] == "error":
-            return parsed["error"]
-        
-        channel_id = str(message.channel.id)
-        
-        if parsed["type"] == "count":
-            messages = self.message_storage.get_recent_messages(channel_id, parsed["value"])
-        elif parsed["type"] == "today":
-            today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-            today_end = datetime.utcnow()
-            messages = self.message_storage.get_messages_by_date_range(channel_id, today_start, today_end)
-        elif parsed["type"] == "yesterday":
-            today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-            yesterday_start = today_start - timedelta(days=1)
-            yesterday_end = today_start
-            messages = self.message_storage.get_messages_by_date_range(channel_id, yesterday_start, yesterday_end)
-        else:
-            return "An unexpected error occurred."
-        
-        if not messages:
-            return "No messages found in the specified range."
-        
-        if not self.ai_client.is_available():
-            return "AI is currently unavailable for summarization."
-        
-        logger.info(f"Generating summary for {len(messages)} messages")
-        
-        summary = await self.ai_client.generate_summary(messages)
-        
-        if summary:
-            return summary
-        else:
-            return "Failed to generate summary. AI service may be unavailable."
+        try:
+            parsed = self.parse_args(args)
+            
+            if parsed["type"] == "error":
+                return parsed["error"]
+            
+            channel_id = str(message.channel.id)
+            
+            if parsed["type"] == "count":
+                messages = self.message_storage.get_recent_messages(channel_id, parsed["value"])
+            elif parsed["type"] == "today":
+                today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+                today_end = datetime.utcnow()
+                messages = self.message_storage.get_messages_by_date_range(channel_id, today_start, today_end)
+            elif parsed["type"] == "yesterday":
+                today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+                yesterday_start = today_start - timedelta(days=1)
+                yesterday_end = today_start
+                messages = self.message_storage.get_messages_by_date_range(channel_id, yesterday_start, yesterday_end)
+            else:
+                return "An unexpected error occurred."
+            
+            if not messages:
+                logger.warning(f"No messages found for summarize request (type: {parsed['type']})")
+                return "No messages found in the specified range."
+            
+            if not self.ai_client.is_available():
+                logger.warning("AI client not available for summarization")
+                return "AI is currently unavailable for summarization."
+            
+            logger.info(f"Generating summary for {len(messages)} messages")
+            
+            summary = await self.ai_client.generate_summary(messages)
+            
+            if summary:
+                logger.info(f"Summary generated successfully ({len(summary)} characters)")
+                return summary
+            else:
+                logger.error("AI returned None for summary")
+                return "Failed to generate summary. AI service may be unavailable."
+        except Exception as e:
+            logger.error(f"Error in summarize command: {e}", exc_info=True)
+            return f"An error occurred while generating the summary: {str(e)}"
