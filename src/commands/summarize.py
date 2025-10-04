@@ -1,6 +1,7 @@
 from typing import Dict, Any
 from datetime import datetime, timedelta, timezone
 from utils.logger import setup_logger
+from utils.constants import SUMMARIZE_MAX_COUNT
 
 logger = setup_logger(__name__)
 
@@ -11,12 +12,11 @@ class SummarizeCommand:
         self.ai_client = ai_client
         self.name = "summarize"
         self.requires_auth = False
-        self.max_count = 500
-        self.default_count = 50
+        self.max_count = SUMMARIZE_MAX_COUNT
     
     def parse_args(self, args: list) -> Dict[str, Any]:
         if not args:
-            return {"type": "count", "value": self.default_count}
+            return {"type": "today", "value": None}
         
         arg = args[0].lower()
         

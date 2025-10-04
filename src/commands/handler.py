@@ -2,6 +2,7 @@
 
 from typing import Optional, Tuple, Dict, Any
 from utils.logger import setup_logger
+from utils.config import Config
 import random
 
 from .lobotomize import LobotomizeCommand
@@ -10,8 +11,6 @@ from .summarize import SummarizeCommand
 from .be_helpful import BeHelpfulCommand
 
 logger = setup_logger(__name__)
-
-AUTHORIZED_USER_ID = "140442303176245248"
 
 
 class CommandHandler:
@@ -29,7 +28,7 @@ class CommandHandler:
 
     def is_authorized(self, user_id: str) -> bool:
         """Check if user is authorized to use commands"""
-        return user_id == AUTHORIZED_USER_ID
+        return user_id == Config.AUTHORIZED_USER_ID
 
     def parse_command(self, content: str) -> Optional[Tuple[str, list]]:
         """

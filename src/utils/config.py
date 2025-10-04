@@ -21,18 +21,15 @@ class Config:
 
     # Discord Configuration
     DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
+    AUTHORIZED_USER_ID = os.getenv("AUTHORIZED_USER_ID", "140442303176245248")
 
     # AI API Configuration
-    AI_API_KEY = os.getenv("GEMINI_API_KEY")  # Using Gemini from .env
+    AI_API_KEY = os.getenv("GEMINI_API_KEY")
     AI_API_BASE_URL = os.getenv(
         "AI_API_BASE_URL", "https://generativelanguage.googleapis.com/v1"
     )
-    AI_MODEL = os.getenv(
-        "AI_MODEL", "gemini-2.5-flash"
-    )  # Updated to use Gemini 2.5 Flash
-    AI_MAX_TOKENS = int(
-        os.getenv("AI_MAX_TOKENS", "2000")
-    )  # Reduced for Discord responses
+    AI_MODEL = os.getenv("AI_MODEL", "gemini-2.5-flash")
+    AI_MAX_TOKENS = int(os.getenv("AI_MAX_TOKENS", "2000"))
 
     # Storage Configuration (absolute paths from project root)
     DATABASE_PATH = os.getenv(
@@ -41,9 +38,6 @@ class Config:
     LOG_FILE_PATH = os.getenv(
         "LOG_FILE_PATH", str(PROJECT_ROOT / "data" / "logs" / "bot.log")
     )
-
-    # Performance Settings
-    MAX_MESSAGE_CONTEXT_FOR_AI = int(os.getenv("MAX_MESSAGE_CONTEXT_FOR_AI", "100"))
 
     # Logging
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")

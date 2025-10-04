@@ -1,8 +1,8 @@
 """Lobotomize command - Delete messages from bot's memory"""
 
 from typing import Dict, Any, Optional
-from utils.config import Config
 from utils.logger import setup_logger
+from utils.constants import MAX_MESSAGE_CONTEXT_FOR_AI
 import random
 
 logger = setup_logger(__name__)
@@ -85,7 +85,11 @@ class LobotomizeCommand:
         return random.choice(responses)
 
     async def execute(
-        self, message, sent_message, limit: Optional[int] = None, delete_all: bool = False
+        self,
+        message,
+        sent_message,
+        limit: Optional[int] = None,
+        delete_all: bool = False,
     ) -> None:
         """
         Execute the lobotomize command
@@ -108,7 +112,7 @@ class LobotomizeCommand:
                     f"Lobotomize ALL: deleted {deleted_count} messages and cleared conversation record"
                 )
             else:
-                limit = limit if limit is not None else Config.MAX_MESSAGE_CONTEXT_FOR_AI
+                limit = limit if limit is not None else MAX_MESSAGE_CONTEXT_FOR_AI
                 limit += 2
                 deleted_count = self.message_storage.delete_recent_messages(
                     channel_id, limit

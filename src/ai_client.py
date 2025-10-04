@@ -4,6 +4,15 @@ import google.genai as genai
 from google.genai import types
 from utils.config import Config, PROMPT_DIR
 from utils.logger import setup_logger
+from utils.constants import (
+    AI_DEFAULT_TEMPERATURE,
+    AI_TOP_P,
+    AI_TOP_K,
+    AI_MAX_IMAGE_UPLOAD,
+    AI_MAX_RESPONSE_CHARS,
+    AI_RESPONSE_TRUNCATE_TO,
+    MAX_MESSAGE_CONTEXT_FOR_AI,
+)
 from pathlib import Path
 import asyncio
 import aiohttp
@@ -102,8 +111,8 @@ class AIClient:
         if context_messages:
             context_parts.append("Recent conversation context:")
             for msg in context_messages[
-                -Config.MAX_MESSAGE_CONTEXT_FOR_AI :
-            ]:  # Use config value for context
+                -MAX_MESSAGE_CONTEXT_FOR_AI :
+            ]:
                 username = msg.get("username", "Unknown")
                 content = msg.get("content", "")
 
@@ -127,7 +136,7 @@ class AIClient:
                                 and content_type.startswith("image/")
                             ):
                                 image_urls.append(url)
-                                message_text += f" [attached image]"
+                                message_text += " [attached image]"
                     except Exception as e:
                         logger.warning(f"Failed to parse media_files: {e}")
 
@@ -181,7 +190,7 @@ class AIClient:
         system_prompt: str,
         image_urls: Optional[List[str]] = None,
         enable_tools: bool = True,
-        temperature: float = 1.0,
+        temperature: float = AI_DEFAULT_TEMPERATURE,
     ) -> Optional[str]:
         """Generate response using Gemini API with configurable options"""
         try:
@@ -189,7 +198,7 @@ class AIClient:
 
             if image_urls and len(image_urls) > 0:
                 logger.info(f"Processing {len(image_urls)} image(s) for AI request")
-                for url in image_urls[-10:]:
+                for url in image_urls[-AI_MAX_IMAGE_UPLOAD:]:
                     uploaded_file = await self._download_and_upload_image(url)
                     if uploaded_file:
                         uploaded_files.append(uploaded_file)
@@ -203,8 +212,8 @@ class AIClient:
                 "system_instruction": system_prompt,
                 "max_output_tokens": Config.AI_MAX_TOKENS,
                 "temperature": temperature,
-                "top_p": 0.95,
-                "top_k": 20,
+                "top_p": AI_TOP_P,
+                "top_k": AI_TOP_K,
                 "safety_settings": [
                     types.SafetySetting(
                         category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
@@ -283,11 +292,11 @@ class AIClient:
                     logger.warning(f"No candidates in response. Response type: {type(response)}")
                 return None
 
-            if len(text) > 2000:
+            if len(text) > AI_MAX_RESPONSE_CHARS:
                 logger.warning(
-                    f"Response too long ({len(text)} chars), truncating to 2000"
+                    f"Response too long ({len(text)} chars), truncating to {AI_MAX_RESPONSE_CHARS}"
                 )
-                text = text[:1997] + "..."
+                text = text[:AI_RESPONSE_TRUNCATE_TO] + "..."
 
             return text
 
@@ -371,7 +380,7 @@ class AIClient:
                 system_prompt=summarize_prompt,
                 image_urls=None,
                 enable_tools=False,
-                temperature=1.0,
+            temperature=AI_DEFAULT_TEMPERATURE,
             )
             
         except Exception as e:

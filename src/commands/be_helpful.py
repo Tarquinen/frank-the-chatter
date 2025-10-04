@@ -1,6 +1,5 @@
-from typing import Optional
 from utils.logger import setup_logger
-from utils.config import Config
+from utils.constants import MAX_MESSAGE_CONTEXT_FOR_AI
 
 logger = setup_logger(__name__)
 
@@ -17,7 +16,7 @@ class BeHelpfulCommand:
             channel_id = str(message.channel.id)
 
             recent_messages = self.message_storage.get_recent_messages(
-                channel_id, Config.MAX_MESSAGE_CONTEXT_FOR_AI
+                channel_id, MAX_MESSAGE_CONTEXT_FOR_AI
             )
 
             logger.info(

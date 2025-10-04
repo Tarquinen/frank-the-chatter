@@ -8,6 +8,12 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent))
 
+from utils.constants import (
+    MAX_MESSAGE_CONTEXT_FOR_AI,
+    LOG_MESSAGE_PREVIEW_LENGTH,
+    TOP_CHANNELS_TO_SHOW,
+)
+
 from message_storage import MessageStorage
 from ai_client import AIClient
 from commands import CommandHandler
@@ -23,11 +29,9 @@ class FrankBot(discord.Client):
     def __init__(self):
         super().__init__()
 
-        # Initialize database storage (Phase 2)
         self.message_storage = MessageStorage()
         logger.info("Database storage initialized")
 
-        # Initialize AI client (Phase 3)
         self.ai_client = AIClient()
 
         # Initialize command handler
@@ -54,36 +58,29 @@ class FrankBot(discord.Client):
         logger.info(
             f"Database size: {db_info.get('size_mb', 0):.1f}MB, Total messages: {db_info.get('total_messages', 0)}"
         )
-        for stat in stats[:5]:  # Show top 5 active channels
+        for stat in stats[:TOP_CHANNELS_TO_SHOW]:
             channel_name = stat.get("channel_name", "Unknown")
             logger.info(
                 f"  Channel {channel_name} ({stat['channel_id']}): {stat['message_count']} messages"
             )
 
     async def on_message(self, message):
-        """Handle incoming messages"""
-        # Store all messages in database (including bot's own messages)
         await self._store_message(message)
 
-        # Don't process bot's own messages for mentions
         if message.author == self.user:
             return
 
-        # Check if bot is mentioned
         if self.user and self.user.mentioned_in(message):
             await self._handle_mention(message)
 
     async def _store_message(self, message):
-        """Store message in database"""
         try:
-            # Store message using MessageStorage
-            message_id = self.message_storage.store_message(message)
+            self.message_storage.store_message(message)
 
-            # Log message
             channel_name = getattr(
                 message.channel, "name", f"Channel-{message.channel.id}"
             )
-            log_msg = f"[{channel_name}] {message.author.display_name}: {message.content[:100]}{'...' if len(message.content) > 100 else ''}"
+            log_msg = f"[{channel_name}] {message.author.display_name}: {message.content[:LOG_MESSAGE_PREVIEW_LENGTH]}{'...' if len(message.content) > LOG_MESSAGE_PREVIEW_LENGTH else ''}"
             if message.attachments:
                 log_msg += f" [{len(message.attachments)} attachment(s)]"
             logger.debug(log_msg)
@@ -119,9 +116,9 @@ class FrankBot(discord.Client):
                         )
 
                     return
-            # Get recent messages from database for context
+
             recent_messages = self.message_storage.get_recent_messages(
-                channel_id, Config.MAX_MESSAGE_CONTEXT_FOR_AI
+                channel_id, MAX_MESSAGE_CONTEXT_FOR_AI
             )
 
             logger.info(
