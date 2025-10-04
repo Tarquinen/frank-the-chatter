@@ -34,7 +34,7 @@ class FrankBot(discord.Client):
 
         self.ai_client = AIClient()
 
-        # Initialize command handler
+        # Initialize command handler (will set bot_user_id after login)
         self.command_handler = CommandHandler(self.message_storage, self.ai_client)
         logger.info("Command handler initialized")
 

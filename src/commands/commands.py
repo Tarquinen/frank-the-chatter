@@ -27,12 +27,17 @@ class CommandsCommand:
             {
                 "name": "!summarize [count|today|yesterday]",
                 "description": "Gary provides a thoughtful recap of the conversation",
-                "permission": "anyone",
+                "permission": "everyone",
             },
             {
                 "name": "!bh (be helpful)",
                 "description": "Larry takes Gary's seat, and he just wants to help you",
-                "permission": "anyone",
+                "permission": "everyone",
+            },
+            {
+                "name": "!roast @user",
+                "description": "Gary digs through someone's message history and serves up a custom roast",
+                "permission": "everyone",
             },
             {
                 "name": "!lobotomize [count|all]",
@@ -41,7 +46,7 @@ class CommandsCommand:
             },
         ]
 
-        response_lines = ["**Available Commands:**\n"]
+        response_lines = []
 
         for cmd in commands_info:
             if cmd["permission"] == "dan only" and not is_authorized:
@@ -49,7 +54,6 @@ class CommandsCommand:
 
             response_lines.append(f"**{cmd['name']}**")
             response_lines.append(f"  • {cmd['description']}")
-            response_lines.append(f"  • Permission: {cmd['permission']}")
             response_lines.append("")
 
         return "\n".join(response_lines).strip()

@@ -21,6 +21,10 @@ python3 -m venv venv
 ./venv/bin/pip install --upgrade pip
 ./venv/bin/pip install -r config/requirements.txt
 
+# Upgrade to latest discord.py-self dev version (required for search() method)
+echo "🔧 Upgrading discord.py-self to latest dev version..."
+./venv/bin/pip install --upgrade git+https://github.com/dolfies/discord.py-self.git
+
 # Patch discord.py-self to support global_name
 echo "🔧 Patching discord.py-self for display name support..."
 ./patch_discord_global_name.sh

@@ -9,6 +9,7 @@ from .lobotomize import LobotomizeCommand
 from .commands import CommandsCommand
 from .summarize import SummarizeCommand
 from .be_helpful import BeHelpfulCommand
+from .roast import RoastCommand
 
 logger = setup_logger(__name__)
 
@@ -24,11 +25,12 @@ class CommandHandler:
             "commands": CommandsCommand(),
             "summarize": SummarizeCommand(message_storage, ai_client),
             "bh": BeHelpfulCommand(message_storage, ai_client),
+            "roast": RoastCommand(message_storage, ai_client),
         }
 
     def is_authorized(self, user_id: str) -> bool:
         """Check if user is authorized to use commands"""
-        return user_id == Config.AUTHORIZED_USER_ID
+        return user_id == str(Config.DAN_USER_ID)
 
     def parse_command(self, content: str) -> Optional[Tuple[str, list]]:
         """
@@ -76,6 +78,9 @@ class CommandHandler:
 
         if command_name == "bh":
             return {"response": await command.execute(message)}
+
+        if command_name == "roast":
+            return {"response": await command.execute(message, args)}
 
         if command_name == "lobotomize":
             parsed = command.parse_args(args)

@@ -21,7 +21,8 @@ class Config:
 
     # Discord Configuration
     DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-    AUTHORIZED_USER_ID = os.getenv("AUTHORIZED_USER_ID", "140442303176245248")
+    BOT_USER_ID = int(os.getenv("BOT_USER_ID", "0"))
+    DAN_USER_ID = int(os.getenv("DAN_USER_ID", "0"))
 
     # AI API Configuration
     AI_API_KEY = os.getenv("GEMINI_API_KEY")
