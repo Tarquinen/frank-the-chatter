@@ -117,6 +117,17 @@ class MessageDatabase:
             if message_id is None:
                 raise ValueError("Failed to store message")
 
+            conn.execute(
+                """
+                INSERT INTO conversations (channel_id, last_activity, message_count)
+                VALUES (?, ?, 1)
+                ON CONFLICT(channel_id) DO UPDATE SET
+                    last_activity = ?,
+                    message_count = (SELECT COUNT(*) FROM messages WHERE channel_id = ?)
+                """,
+                (channel_id, timestamp, timestamp, channel_id),
+            )
+
             conn.commit()
             return message_id
 
@@ -264,6 +275,20 @@ class MessageDatabase:
                     old_message_ids,
                 )
 
+                conn.execute(
+                    """
+                    UPDATE conversations 
+                    SET message_count = (
+                        SELECT COUNT(*) FROM messages WHERE channel_id = ?
+                    ),
+                    last_activity = (
+                        SELECT MAX(timestamp) FROM messages WHERE channel_id = ?
+                    )
+                    WHERE channel_id = ?
+                """,
+                    (channel_id, channel_id, channel_id),
+                )
+
                 conn.commit()
                 print(
                     f"Cleaned up {len(old_message_ids)} old messages from channel {channel_id}"
@@ -323,6 +348,21 @@ class MessageDatabase:
             )
 
             deleted_count = cursor.rowcount
+
+            if deleted_count > 0:
+                conn.execute("""
+                    UPDATE conversations
+                    SET message_count = (
+                        SELECT COUNT(*) FROM messages WHERE messages.channel_id = conversations.channel_id
+                    ),
+                    last_activity = (
+                        SELECT MAX(timestamp) FROM messages WHERE messages.channel_id = conversations.channel_id
+                    )
+                    WHERE channel_id IN (
+                        SELECT DISTINCT channel_id FROM messages
+                    )
+                """)
+
             conn.commit()
 
             if deleted_count > 0:

@@ -64,10 +64,6 @@ class MessageStorage:
                 f"Stored message {discord_message_id} from {username} in channel {channel_id}"
             )
 
-            # Update conversation tracking
-            channel_name = getattr(message.channel, "name", f"Channel-{channel_id}")
-            self.update_conversation(channel_id, channel_name)
-
             # Periodic cleanup check
             self.maybe_cleanup_channel(channel_id)
 
@@ -174,29 +170,7 @@ class MessageStorage:
             )
             return 0
 
-    def update_conversation(self, channel_id: str, channel_name: str):
-        try:
-            import sqlite3
 
-            with sqlite3.connect(self.db.db_path) as conn:
-                cursor = conn.execute(
-                    "SELECT COUNT(*) FROM messages WHERE channel_id = ?", (channel_id,)
-                )
-                message_count = cursor.fetchone()[0]
-
-                conn.execute(
-                    """
-                    INSERT OR REPLACE INTO conversations 
-                    (channel_id, channel_name, last_activity, message_count)
-                    VALUES (?, ?, ?, ?)
-                """,
-                    (channel_id, channel_name, datetime.now(), message_count),
-                )
-
-                conn.commit()
-
-        except Exception as e:
-            logger.error(f"Failed to update conversation {channel_id}: {e}")
 
     def maybe_cleanup_channel(self, channel_id: str):
         try:
