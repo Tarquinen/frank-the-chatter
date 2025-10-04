@@ -219,6 +219,20 @@ class MessageDatabase:
                     message_ids,
                 )
 
+                cursor = conn.execute(
+                    """
+                    UPDATE conversations 
+                    SET message_count = (
+                        SELECT COUNT(*) FROM messages WHERE channel_id = ?
+                    ),
+                    last_activity = (
+                        SELECT MAX(timestamp) FROM messages WHERE channel_id = ?
+                    )
+                    WHERE channel_id = ?
+                """,
+                    (channel_id, channel_id, channel_id),
+                )
+
                 conn.commit()
                 return len(message_ids)
 
