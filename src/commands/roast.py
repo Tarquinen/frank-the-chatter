@@ -57,7 +57,7 @@ class RoastCommand:
             for mentioned_user in message.mentions:
                 if not mentioned_user.bot and mentioned_user.id != Config.BOT_USER_ID:
                     return mentioned_user
-            if message.content.count('<@') >= 2:
+            if message.content.count("<@") >= 2:
                 return message.mentions[0]
         return None
 
@@ -95,12 +95,12 @@ class RoastCommand:
             )
             formatted_context = "\n".join(context_parts)
 
-            logger.info(f"=== ROAST AI CONTEXT DEBUG ===")
-            logger.info(f"System Prompt:\n{roast_prompt}")
-            logger.info(f"User Context:\n{formatted_context}")
-            logger.info(f"Message count: {len(messages)}")
-            logger.info(f"Temperature: 1.2")
-            logger.info(f"=== END ROAST AI CONTEXT ===")
+            # logger.info(f"=== ROAST AI CONTEXT DEBUG ===")
+            # logger.info(f"System Prompt:\n{roast_prompt}")
+            # logger.info(f"User Context:\n{formatted_context}")
+            # logger.info(f"Message count: {len(messages)}")
+            # logger.info(f"Temperature: 1.2")
+            # logger.info(f"=== END ROAST AI CONTEXT ===")
 
             ai_response = await self.ai_client._generate_with_config(
                 formatted_context=formatted_context,
