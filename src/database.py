@@ -1,18 +1,19 @@
-import sqlite3
+from datetime import datetime, timedelta
 import json
 import os
-from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+import sqlite3
+from typing import Any
+
 from utils.constants import (
-    MAX_DATABASE_SIZE_GB,
-    MAX_MESSAGES_PER_CHANNEL,
-    DEFAULT_RECENT_MESSAGES,
     BYTES_PER_MB,
-    MB_PER_GB,
+    CLEANUP_CHANNEL_KEEP_LAST,
     CLEANUP_DAYS_PRIMARY,
     CLEANUP_DAYS_SECONDARY,
-    CLEANUP_CHANNEL_KEEP_LAST,
+    DEFAULT_RECENT_MESSAGES,
+    MAX_DATABASE_SIZE_GB,
+    MAX_MESSAGES_PER_CHANNEL,
+    MB_PER_GB,
 )
 
 
@@ -73,7 +74,7 @@ class MessageDatabase:
         username: str,
         content: str,
         timestamp: datetime,
-        attachments: Optional[List[Dict]] = None,
+        attachments: list[dict] | None = None,
     ) -> int:
         """
         Store a Discord message in the database
@@ -96,8 +97,8 @@ class MessageDatabase:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.execute(
                 """
-                INSERT INTO messages 
-                (channel_id, discord_message_id, user_id, username, content, 
+                INSERT INTO messages
+                (channel_id, discord_message_id, user_id, username, content,
                  timestamp, has_attachments, media_files)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
@@ -133,7 +134,7 @@ class MessageDatabase:
 
     def get_recent_messages(
         self, channel_id: str, limit: int = DEFAULT_RECENT_MESSAGES
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get recent messages from a channel for AI context
 
@@ -149,9 +150,9 @@ class MessageDatabase:
             cursor = conn.execute(
                 """
                 SELECT username, content, timestamp, has_attachments, media_files
-                FROM messages 
+                FROM messages
                 WHERE channel_id = ?
-                ORDER BY timestamp DESC 
+                ORDER BY timestamp DESC
                 LIMIT ?
             """,
                 (channel_id, limit),
@@ -210,7 +211,7 @@ class MessageDatabase:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.execute(
                 """
-                SELECT id FROM messages 
+                SELECT id FROM messages
                 WHERE channel_id = ?
                 ORDER BY timestamp DESC
                 LIMIT ?
@@ -224,7 +225,7 @@ class MessageDatabase:
                 placeholders = ",".join("?" * len(message_ids))
                 conn.execute(
                     f"""
-                    DELETE FROM messages 
+                    DELETE FROM messages
                     WHERE id IN ({placeholders})
                 """,
                     message_ids,
@@ -232,7 +233,7 @@ class MessageDatabase:
 
                 cursor = conn.execute(
                     """
-                    UPDATE conversations 
+                    UPDATE conversations
                     SET message_count = (
                         SELECT COUNT(*) FROM messages WHERE channel_id = ?
                     ),
@@ -249,12 +250,14 @@ class MessageDatabase:
 
             return 0
 
-    def cleanup_old_messages(self, channel_id: str, keep_last: int = MAX_MESSAGES_PER_CHANNEL):
+    def cleanup_old_messages(
+        self, channel_id: str, keep_last: int = MAX_MESSAGES_PER_CHANNEL
+    ):
         with sqlite3.connect(self.db_path) as conn:
             # Find messages to delete (older than the last N messages)
             cursor = conn.execute(
                 """
-                SELECT id FROM messages 
+                SELECT id FROM messages
                 WHERE channel_id = ?
                 ORDER BY timestamp DESC
                 OFFSET ?
@@ -269,7 +272,7 @@ class MessageDatabase:
                 placeholders = ",".join("?" * len(old_message_ids))
                 conn.execute(
                     f"""
-                    DELETE FROM messages 
+                    DELETE FROM messages
                     WHERE id IN ({placeholders})
                 """,
                     old_message_ids,
@@ -277,7 +280,7 @@ class MessageDatabase:
 
                 conn.execute(
                     """
-                    UPDATE conversations 
+                    UPDATE conversations
                     SET message_count = (
                         SELECT COUNT(*) FROM messages WHERE channel_id = ?
                     ),
@@ -301,14 +304,14 @@ class MessageDatabase:
             )
             return cursor.fetchone()[0]
 
-    def get_channels_with_messages(self) -> List[Dict[str, Any]]:
+    def get_channels_with_messages(self) -> list[dict[str, Any]]:
         """Get list of all channels with message counts"""
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.execute("""
-                SELECT channel_id, COUNT(*) as message_count, 
+                SELECT channel_id, COUNT(*) as message_count,
                        MAX(timestamp) as last_activity
-                FROM messages 
+                FROM messages
                 GROUP BY channel_id
                 ORDER BY last_activity DESC
             """)
@@ -341,7 +344,7 @@ class MessageDatabase:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.execute(
                 """
-                DELETE FROM messages 
+                DELETE FROM messages
                 WHERE timestamp < ?
             """,
                 (cutoff_date,),
@@ -374,7 +377,7 @@ class MessageDatabase:
 
     def get_messages_by_date_range(
         self, channel_id: str, start_date: datetime, end_date: datetime
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get messages within a specific date range
 
@@ -391,7 +394,7 @@ class MessageDatabase:
             cursor = conn.execute(
                 """
                 SELECT username, content, timestamp, has_attachments, media_files
-                FROM messages 
+                FROM messages
                 WHERE channel_id = ? AND timestamp >= ? AND timestamp < ?
                 ORDER BY timestamp ASC
             """,
@@ -433,14 +436,18 @@ class MessageDatabase:
 
             # If still too large, clean older messages (older than CLEANUP_DAYS_SECONDARY days)
             if self.get_database_size_mb() > max_size_mb:
-                deleted_by_age += self.cleanup_old_messages_by_age(CLEANUP_DAYS_SECONDARY)
+                deleted_by_age += self.cleanup_old_messages_by_age(
+                    CLEANUP_DAYS_SECONDARY
+                )
 
             # If still too large, limit per-channel messages
             if self.get_database_size_mb() > max_size_mb:
                 channels = self.get_channels_with_messages()
                 for channel in channels:
                     if channel["message_count"] > MAX_MESSAGES_PER_CHANNEL:
-                        self.cleanup_old_messages(channel["channel_id"], CLEANUP_CHANNEL_KEEP_LAST)
+                        self.cleanup_old_messages(
+                            channel["channel_id"], CLEANUP_CHANNEL_KEEP_LAST
+                        )
 
             new_size_mb = self.get_database_size_mb()
             print(f"Database cleanup complete. Size: {new_size_mb:.1f}MB")

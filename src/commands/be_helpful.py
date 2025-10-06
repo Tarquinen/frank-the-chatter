@@ -1,5 +1,5 @@
-from utils.logger import setup_logger
 from utils.constants import MAX_MESSAGE_CONTEXT_FOR_AI
+from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -20,7 +20,9 @@ class BeHelpfulCommand:
             )
 
             logger.info(
-                f"BeHelpful mode activated by {message.author.display_name} with {len(recent_messages)} messages of context"
+                "BeHelpful mode activated by %s with %d messages of context",
+                message.author.display_name,
+                len(recent_messages),
             )
 
             if not self.ai_client.is_available():

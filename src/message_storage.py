@@ -1,16 +1,18 @@
+from datetime import datetime
+from typing import Any
+
 import discord
-from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional
+
 from database import MessageDatabase
-from utils.logger import setup_logger
 from utils.config import Config
 from utils.constants import (
+    DB_SIZE_CHECK_INTERVAL,
     MAX_DATABASE_SIZE_GB,
     MAX_MESSAGES_PER_CHANNEL,
-    MESSAGES_CLEANUP_MARGIN,
-    DB_SIZE_CHECK_INTERVAL,
     MB_PER_GB,
+    MESSAGES_CLEANUP_MARGIN,
 )
+from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -21,7 +23,7 @@ class MessageStorage:
     Handles message archival and conversation management
     """
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: str | None = None):
         # Use config path by default
         self.db_path = db_path or Config.DATABASE_PATH
         self.db = MessageDatabase(self.db_path)
@@ -78,7 +80,7 @@ class MessageStorage:
 
     def get_recent_messages(
         self, channel_id: str, limit: int = 100
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get recent messages from a channel for AI context
 
@@ -101,7 +103,7 @@ class MessageStorage:
 
     def get_messages_by_date_range(
         self, channel_id: str, start_date: datetime, end_date: datetime
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get messages within a specific date range
 
@@ -170,8 +172,6 @@ class MessageStorage:
             )
             return 0
 
-
-
     def maybe_cleanup_channel(self, channel_id: str):
         try:
             message_count = self.db.get_message_count(channel_id)
@@ -210,7 +210,7 @@ class MessageStorage:
         except Exception as e:
             logger.error(f"Failed to check database size: {e}")
 
-    def get_database_info(self) -> Dict[str, Any]:
+    def get_database_info(self) -> dict[str, Any]:
         """Get current database information"""
         try:
             return {
@@ -222,7 +222,7 @@ class MessageStorage:
             logger.error(f"Failed to get database info: {e}")
             return {"error": str(e)}
 
-    def get_conversation_stats(self) -> List[Dict[str, Any]]:
+    def get_conversation_stats(self) -> list[dict[str, Any]]:
         """
         Get statistics for all tracked conversations
 
@@ -235,7 +235,7 @@ class MessageStorage:
             logger.error(f"Failed to get conversation stats: {e}")
             return []
 
-    def format_messages_for_ai(self, messages: List[Dict[str, Any]]) -> str:
+    def format_messages_for_ai(self, messages: list[dict[str, Any]]) -> str:
         """
         Format messages for AI context
 
@@ -260,7 +260,7 @@ class MessageStorage:
                 try:
                     dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
                     time_str = dt.strftime("%H:%M")
-                except:
+                except Exception:
                     time_str = timestamp[:5]  # Fallback to first 5 chars
             else:
                 time_str = timestamp.strftime("%H:%M")
@@ -274,4 +274,3 @@ class MessageStorage:
             formatted_lines.append(f"[{time_str}] {username}: {content}{media_info}")
 
         return "\n".join(formatted_lines)
-

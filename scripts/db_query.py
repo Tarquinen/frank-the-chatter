@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """Database query helper for Frank the Chatter bot"""
 
+import json
+from pathlib import Path
 import sqlite3
 import sys
-from pathlib import Path
-from datetime import datetime
-import json
 
 # Add src to path so we can import config
 sys.path.append(str(Path(__file__).parent.parent / "src"))
@@ -36,7 +35,7 @@ def show_stats():
     with connect_db() as conn:
         # Count totals
         cursor = conn.execute("""
-            SELECT 
+            SELECT
                 (SELECT COUNT(*) FROM messages) as total_messages,
                 (SELECT COUNT(*) FROM conversations) as total_conversations,
                 (SELECT COUNT(*) FROM messages WHERE has_attachments = 1) as messages_with_media
@@ -50,7 +49,7 @@ def show_stats():
         print("\n=== CONVERSATIONS ===")
         cursor = conn.execute("""
             SELECT channel_id, channel_name, message_count, last_activity
-            FROM conversations 
+            FROM conversations
             ORDER BY last_activity DESC
         """)
         for row in cursor:
@@ -61,7 +60,7 @@ def show_stats():
             user_cursor = conn.execute(
                 """
                 SELECT username, MAX(timestamp) as last_message
-                FROM messages 
+                FROM messages
                 WHERE channel_id = ? AND username != 'Frank'
                 GROUP BY username
                 ORDER BY last_message DESC
@@ -108,8 +107,8 @@ def show_recent_messages(limit=10):
         cursor = conn.execute(
             """
             SELECT channel_id, username, content, timestamp, has_attachments, media_files
-            FROM messages 
-            ORDER BY timestamp DESC 
+            FROM messages
+            ORDER BY timestamp DESC
             LIMIT ?
         """,
             (limit,),
@@ -118,19 +117,16 @@ def show_recent_messages(limit=10):
         for row in cursor:
             channel_id, username, content, timestamp, has_attachments, media_files = row
             content_preview = content[:80] + "..." if len(content) > 80 else content
-            
+
             media_info = ""
             if has_attachments and media_files:
                 try:
                     attachments = json.loads(media_files)
                     urls = [att.get('url', '') for att in attachments if att.get('url')]
-                    if urls:
-                        media_info = f" [📎 {', '.join(urls)}]"
-                    else:
-                        media_info = " [📎]"
-                except:
+                    media_info = f" [📎 {', '.join(urls)}]" if urls else " [📎]"
+                except Exception:
                     media_info = " [📎]"
-            
+
             print(f"[{timestamp[:19]}] {username}: {content_preview}{media_info}")
 
 
@@ -141,9 +137,9 @@ def show_channel_messages(channel_id, limit=10):
         cursor = conn.execute(
             """
             SELECT username, content, timestamp, has_attachments, media_files
-            FROM messages 
+            FROM messages
             WHERE channel_id = ?
-            ORDER BY timestamp DESC 
+            ORDER BY timestamp DESC
             LIMIT ?
         """,
             (channel_id, limit),
@@ -156,7 +152,7 @@ def show_channel_messages(channel_id, limit=10):
                 try:
                     attachments = json.loads(media_files)
                     media_info = f" [+{len(attachments)} files]"
-                except:
+                except Exception:
                     media_info = " [+attachments]"
 
             print(f"[{timestamp[:19]}] {username}: {content}{media_info}")
@@ -220,7 +216,7 @@ def clear_all(confirm=False):
     with connect_db() as conn:
         # Get total counts first
         cursor = conn.execute("""
-            SELECT 
+            SELECT
                 (SELECT COUNT(*) FROM messages) as total_messages,
                 (SELECT COUNT(*) FROM conversations) as total_conversations
         """)
@@ -232,7 +228,7 @@ def clear_all(confirm=False):
             return
 
         if not confirm:
-            print(f"WARNING: This will permanently delete ALL data from the database!")
+            print("WARNING: This will permanently delete ALL data from the database!")
             print(
                 f"This includes {total_messages} messages and {total_conversations} conversations"
             )
@@ -250,7 +246,7 @@ def clear_all(confirm=False):
             deleted_conversations = cursor.rowcount
 
             conn.commit()
-            print(f"Successfully deleted ALL data from database")
+            print("Successfully deleted ALL data from database")
             print(
                 f"Deleted: {deleted_messages} messages and {deleted_conversations} conversations"
             )
@@ -263,7 +259,7 @@ def clear_all(confirm=False):
 
 def custom_query(query):
     """Execute a custom SQL query"""
-    print(f"\n=== CUSTOM QUERY ===")
+    print("\n=== CUSTOM QUERY ===")
     print(f"Query: {query}\n")
 
     with connect_db() as conn:

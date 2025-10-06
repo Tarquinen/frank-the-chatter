@@ -1,5 +1,6 @@
-import discord
 import os
+
+import discord
 from dotenv import load_dotenv
 
 load_dotenv("../.env")
@@ -19,7 +20,7 @@ class MyClient(discord.Client):
         channel = self.get_channel(CHANNEL_ID)
 
         if channel:
-            print(f"Found channel. Sending message...")
+            print("Found channel. Sending message...")
             await channel.send("sending a message from a bot")
             print("Message sent!")
         else:

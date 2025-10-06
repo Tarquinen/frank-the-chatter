@@ -1,15 +1,16 @@
 """Command system for Frank the Chatter bot"""
 
-from typing import Optional, Tuple, Dict, Any
-from utils.logger import setup_logger
-from utils.config import Config
 import random
+from typing import Any
 
-from .lobotomize import LobotomizeCommand
-from .commands import CommandsCommand
-from .summarize import SummarizeCommand
+from utils.config import Config
+from utils.logger import setup_logger
+
 from .be_helpful import BeHelpfulCommand
+from .commands import CommandsCommand
+from .lobotomize import LobotomizeCommand
 from .roast import RoastCommand
+from .summarize import SummarizeCommand
 
 logger = setup_logger(__name__)
 
@@ -32,7 +33,7 @@ class CommandHandler:
         """Check if user is authorized to use commands"""
         return user_id == str(Config.DAN_USER_ID)
 
-    def parse_command(self, content: str) -> Optional[Tuple[str, list]]:
+    def parse_command(self, content: str) -> tuple[str, list] | None:
         """
         Parse message content for commands
         Handles both direct commands (!lobotomize) and commands after mentions (@Frank !lobotomize)
@@ -53,7 +54,7 @@ class CommandHandler:
 
     async def handle_command(
         self, message, command_name: str, args: list
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         Execute a command and return response with metadata
 

@@ -1,9 +1,10 @@
 """Lobotomize command - Delete messages from bot's memory"""
 
-from typing import Dict, Any, Optional
-from utils.logger import setup_logger
-from utils.constants import MAX_MESSAGE_CONTEXT_FOR_AI
 import random
+from typing import Any
+
+from utils.constants import MAX_MESSAGE_CONTEXT_FOR_AI
+from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -16,7 +17,7 @@ class LobotomizeCommand:
         self.name = "lobotomize"
         self.requires_auth = True
 
-    def parse_args(self, args: list) -> Dict[str, Any]:
+    def parse_args(self, args: list) -> dict[str, Any]:
         """
         Parse command arguments
 
@@ -88,7 +89,7 @@ class LobotomizeCommand:
         self,
         message,
         sent_message,
-        limit: Optional[int] = None,
+        limit: int | None = None,
         delete_all: bool = False,
     ) -> None:
         """

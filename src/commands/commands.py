@@ -1,6 +1,5 @@
 """Commands command - List available bot commands"""
 
-from typing import Dict, Any
 from utils.logger import setup_logger
 
 logger = setup_logger(__name__)

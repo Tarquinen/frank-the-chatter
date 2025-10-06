@@ -1,8 +1,9 @@
 """Configuration management for Frank the Chatter bot"""
 
 import os
-from dotenv import load_dotenv
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 # Get project root directory
 PROJECT_ROOT = Path.cwd()

@@ -1,22 +1,23 @@
 """Main Discord bot entry point for Frank the Chatter"""
 
+from pathlib import Path
+import sys
+
 import discord
+
 from utils.config import Config
 from utils.logger import setup_logger
-import sys
-from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent))
 
-from utils.constants import (
-    MAX_MESSAGE_CONTEXT_FOR_AI,
-    LOG_MESSAGE_PREVIEW_LENGTH,
-    TOP_CHANNELS_TO_SHOW,
-)
-
-from message_storage import MessageStorage
 from ai_client import AIClient
 from commands import CommandHandler
+from message_storage import MessageStorage
+from utils.constants import (
+    LOG_MESSAGE_PREVIEW_LENGTH,
+    MAX_MESSAGE_CONTEXT_FOR_AI,
+    TOP_CHANNELS_TO_SHOW,
+)
 
 # Validate configuration
 Config.validate()
@@ -80,7 +81,13 @@ class FrankBot(discord.Client):
             channel_name = getattr(
                 message.channel, "name", f"Channel-{message.channel.id}"
             )
-            log_msg = f"[{channel_name}] {message.author.display_name}: {message.content[:LOG_MESSAGE_PREVIEW_LENGTH]}{'...' if len(message.content) > LOG_MESSAGE_PREVIEW_LENGTH else ''}"
+            preview = message.content[:LOG_MESSAGE_PREVIEW_LENGTH]
+            overflow = (
+                "..." if len(message.content) > LOG_MESSAGE_PREVIEW_LENGTH else ""
+            )
+            log_msg = (
+                f"[{channel_name}] {message.author.display_name}: {preview}{overflow}"
+            )
             if message.attachments:
                 log_msg += f" [{len(message.attachments)} attachment(s)]"
             logger.debug(log_msg)

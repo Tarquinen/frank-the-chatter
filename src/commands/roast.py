@@ -1,7 +1,8 @@
 import discord
-from utils.logger import setup_logger
-from utils.constants import MAX_MESSAGE_CONTEXT_FOR_AI
+
 from utils.config import Config
+from utils.constants import MAX_MESSAGE_CONTEXT_FOR_AI
+from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -82,7 +83,10 @@ class RoastCommand:
     async def _generate_roast(self, target_user, messages):
         try:
             if not self.ai_client.is_available():
-                return f"My AI is unavailable right now, but I'm sure {target_user.display_name} deserves a good roasting."
+                return (
+                    "My AI is unavailable right now, but I'm sure "
+                    f"{target_user.display_name} deserves a good roasting."
+                )
 
             roast_prompt = self._get_roast_prompt(target_user)
 
@@ -129,9 +133,13 @@ class RoastCommand:
             else:
                 prompt_file = "/home/tarquin/src/frank-the-chatter/prompts/roast.txt"
 
-            with open(prompt_file, "r") as f:
+            with open(prompt_file) as f:
                 prompt = f.read()
                 return prompt.replace("{username}", target_user.display_name)
         except Exception as e:
             logger.error(f"Error loading roast prompt: {e}")
-            return f"You are a witty AI roaster. Generate a clever, playful roast of {target_user.display_name} based on their message history. Keep it fun and not genuinely mean."
+            return (
+                "You are a witty AI roaster. Generate a clever, playful roast of "
+                f"{target_user.display_name} based on their message history. "
+                "Keep it fun and not genuinely mean."
+            )

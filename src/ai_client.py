@@ -1,23 +1,24 @@
 """AI client for Frank the Chatter using Google Gemini API"""
 
+import asyncio
+from pathlib import Path
+import tempfile
+
+import aiohttp
 import google.genai as genai
 from google.genai import types
-from utils.config import Config, PROMPT_DIR
-from utils.logger import setup_logger
+
+from utils.config import PROMPT_DIR, Config
 from utils.constants import (
     AI_DEFAULT_TEMPERATURE,
-    AI_TOP_P,
-    AI_TOP_K,
     AI_MAX_IMAGE_UPLOAD,
     AI_MAX_RESPONSE_CHARS,
     AI_RESPONSE_TRUNCATE_TO,
+    AI_TOP_K,
+    AI_TOP_P,
     MAX_MESSAGE_CONTEXT_FOR_AI,
 )
-from pathlib import Path
-import asyncio
-import aiohttp
-import tempfile
-from typing import List, Optional
+from utils.logger import setup_logger
 
 logger = setup_logger()
 
@@ -62,8 +63,8 @@ class AIClient:
             return "You are Frank, an AI in a Discord chat."
 
     async def generate_response(
-        self, context_messages: List[dict], mentioned_by: str
-    ) -> Optional[str]:
+        self, context_messages: list[dict], mentioned_by: str
+    ) -> str | None:
         """
         Generate an AI response based on conversation context
 
@@ -101,7 +102,7 @@ class AIClient:
             return f"Hi {mentioned_by}! I'm having some trouble with my AI right now, but I'm still here!"
 
     def _format_context_for_ai(
-        self, context_messages: List[dict], mentioned_by: str
+        self, context_messages: list[dict], mentioned_by: str
     ):
         """Format conversation context for the AI model, extracting image URLs"""
         context_parts = []
@@ -154,31 +155,30 @@ class AIClient:
             return None
 
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url) as resp:
-                    if resp.status != 200:
-                        logger.warning(
-                            f"Failed to download image from {url}: HTTP {resp.status}"
-                        )
-                        return None
-
-                    image_data = await resp.read()
-
-                    with tempfile.NamedTemporaryFile(
-                        delete=False, suffix=".jpg"
-                    ) as tmp_file:
-                        tmp_file.write(image_data)
-                        tmp_path = tmp_file.name
-
-                    loop = asyncio.get_event_loop()
-                    uploaded_file = await loop.run_in_executor(
-                        None, lambda: self.client.files.upload(file=tmp_path)
+            async with aiohttp.ClientSession() as session, session.get(url) as resp:
+                if resp.status != 200:
+                    logger.warning(
+                        f"Failed to download image from {url}: HTTP {resp.status}"
                     )
+                    return None
 
-                    Path(tmp_path).unlink()
+                image_data = await resp.read()
 
-                    logger.info(f"Uploaded image to Gemini: {uploaded_file.name}")
-                    return uploaded_file
+                with tempfile.NamedTemporaryFile(
+                    delete=False, suffix=".jpg"
+                ) as tmp_file:
+                    tmp_file.write(image_data)
+                    tmp_path = tmp_file.name
+
+                loop = asyncio.get_event_loop()
+                uploaded_file = await loop.run_in_executor(
+                    None, lambda: self.client.files.upload(file=tmp_path)
+                )
+
+                Path(tmp_path).unlink()
+
+                logger.info(f"Uploaded image to Gemini: {uploaded_file.name}")
+                return uploaded_file
 
         except Exception as e:
             logger.error(f"Failed to download/upload image from {url}: {e}")
@@ -188,10 +188,10 @@ class AIClient:
         self,
         formatted_context: str,
         system_prompt: str,
-        image_urls: Optional[List[str]] = None,
+        image_urls: list[str] | None = None,
         enable_tools: bool = True,
         temperature: float = AI_DEFAULT_TEMPERATURE,
-    ) -> Optional[str]:
+    ) -> str | None:
         """Generate response using Gemini API with configurable options"""
         try:
             uploaded_files = []
@@ -203,10 +203,7 @@ class AIClient:
                     if uploaded_file:
                         uploaded_files.append(uploaded_file)
 
-            if uploaded_files:
-                content_parts = [formatted_context] + uploaded_files
-            else:
-                content_parts = formatted_context
+            content_parts = [formatted_context, *uploaded_files] if uploaded_files else formatted_context
 
             config_kwargs = {
                 "system_instruction": system_prompt,
@@ -305,8 +302,8 @@ class AIClient:
             return None
 
     async def _generate_conversation_response(
-        self, formatted_context: str, image_urls: Optional[List[str]] = None
-    ) -> Optional[str]:
+        self, formatted_context: str, image_urls: list[str] | None = None
+    ) -> str | None:
         """Generate conversational response with tools and image support enabled"""
         return await self._generate_with_config(
             formatted_context=formatted_context,
@@ -328,30 +325,30 @@ class AIClient:
         """Check if AI client is available and configured"""
         return self.client is not None
 
-    async def generate_summary(self, messages: List[dict]) -> Optional[str]:
+    async def generate_summary(self, messages: list[dict]) -> str | None:
         """
         Generate a conversation summary using summarize.txt prompt
-        
+
         Args:
             messages: List of messages to summarize
-        
+
         Returns:
             Summary text or None if AI unavailable
         """
         if not self.client:
             logger.warning("AI client not available for summarization")
             return None
-        
+
         try:
             logger.info(f"Loading summarize prompt and formatting {len(messages)} messages")
             summarize_prompt = self._load_system_prompt("summarize.txt")
-            
+
             context_parts = ["Conversation history to summarize:\n"]
             for msg in messages:
                 timestamp = msg.get("timestamp", "")
                 username = msg.get("username", "Unknown")
                 content = msg.get("content", "")
-                
+
                 if timestamp:
                     try:
                         from datetime import datetime
@@ -362,19 +359,19 @@ class AIClient:
                         time_str = "??:??"
                 else:
                     time_str = "??:??"
-                
+
                 message_line = f"[{time_str}] {username}: {content}"
-                
+
                 if msg.get("has_attachments"):
                     message_line += " [attached media]"
-                
+
                 context_parts.append(message_line)
-            
+
             context_parts.append("\nPlease provide a summary of this conversation.")
             formatted_context = "\n".join(context_parts)
-            
+
             logger.info(f"Formatted context length: {len(formatted_context)} characters")
-            
+
             return await self._generate_with_config(
                 formatted_context=formatted_context,
                 system_prompt=summarize_prompt,
@@ -382,7 +379,7 @@ class AIClient:
                 enable_tools=False,
             temperature=AI_DEFAULT_TEMPERATURE,
             )
-            
+
         except Exception as e:
             logger.error(f"Error generating summary: {e}", exc_info=True)
             return None

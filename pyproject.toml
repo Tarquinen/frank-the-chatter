@@ -1,0 +1,36 @@
+[tool.ruff]
+# Python version used by this project
+target-version = "py311"
+line-length = 120
+src = ["src", "tests", "tools", "scripts"]
+exclude = [
+  ".git",
+  "__pycache__",
+  ".venv",
+  "venv",
+  "node_modules",
+]
+
+[tool.ruff.lint]
+# Keep the ruleset focused and useful by default
+select = [
+  "E",   # pycodestyle errors
+  "F",   # pyflakes
+  "W",   # pycodestyle warnings
+  "I",   # isort (import sorting)
+  "UP",  # pyupgrade
+  "B",   # flake8-bugbear
+  "SIM", # flake8-simplify
+  "RUF", # ruff-specific rules
+]
+# Uncomment to suppress line-length warnings in existing code
+# ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ai_client", "utils", "commands", "message_storage", "database"]
+force-sort-within-sections = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"

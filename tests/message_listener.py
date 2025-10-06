@@ -1,7 +1,8 @@
-import discord
-import os
-from dotenv import load_dotenv
 from datetime import datetime
+import os
+
+import discord
+from dotenv import load_dotenv
 
 load_dotenv("../.env")
 
@@ -13,24 +14,28 @@ if not TOKEN:
 class MessageListener(discord.Client):
     async def on_ready(self):
         print(f'Bot logged in as {self.user}!')
-        print(f'Listening for messages across all accessible channels')
-        
+        print('Listening for messages across all accessible channels')
+
     async def on_message(self, message):
         if message.author == self.user:
             return
-            
+
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         author = f"{message.author.display_name} (@{message.author.name})"
-        channel_info = f"#{message.channel.name}" if hasattr(message.channel, 'name') else f"Channel {message.channel.id}"
+        channel_info = (
+            f"#{message.channel.name}"
+            if hasattr(message.channel, "name")
+            else f"Channel {message.channel.id}"
+        )
         content = message.content
-        
+
         if message.attachments:
             for attachment in message.attachments:
                 content += f" [Image: {attachment.url}]"
-        
+
         log_entry = f"[{timestamp}] {channel_info} {author}: {content}"
         print(log_entry)
-        
+
         with open("../data/logs/message_log.txt", "a", encoding="utf-8") as f:
             f.write(log_entry + "\n")
 
