@@ -56,10 +56,10 @@ class AIClient:
                 return prompt_path.read_text().strip()
             else:
                 logger.warning(f"{prompt_file} not found, using default system prompt")
-                return "You are Gary, an AI in a Discord chat."
+                return "You are Frank, an AI in a Discord chat."
         except Exception as e:
             logger.error(f"Failed to load system prompt: {e}")
-            return "You are Gary, an AI in a Discord chat."
+            return "You are Frank, an AI in a Discord chat."
 
     async def generate_response(
         self, context_messages: List[dict], mentioned_by: str
@@ -144,7 +144,7 @@ class AIClient:
                     context_parts.append(message_text)
 
         # Add instruction for response
-        context_parts.append(f"\nPlease respond as Gary to {mentioned_by}.")
+        context_parts.append(f"\nPlease respond as Frank to {mentioned_by}.")
 
         return "\n".join(context_parts), image_urls
 

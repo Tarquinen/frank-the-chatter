@@ -40,12 +40,12 @@ class AIClientTester:
             },
             {
                 "username": "Charlie",
-                "content": "@Gary can you help me with something?",
+                "content": "@Frank can you help me with something?",
                 "has_attachments": False,
             },
         ]
         
-        user_message = "@Gary can you help me with something?"
+        user_message = "@Frank can you help me with something?"
         mentioned_by = "Charlie"
         
         self.log_data("SYSTEM PROMPT", self.client.system_prompt)

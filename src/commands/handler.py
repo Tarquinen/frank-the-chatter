@@ -35,7 +35,7 @@ class CommandHandler:
     def parse_command(self, content: str) -> Optional[Tuple[str, list]]:
         """
         Parse message content for commands
-        Handles both direct commands (!lobotomize) and commands after mentions (@Gary !lobotomize)
+        Handles both direct commands (!lobotomize) and commands after mentions (@Frank !lobotomize)
 
         Returns:
             Tuple of (command_name, args) if command found, None otherwise

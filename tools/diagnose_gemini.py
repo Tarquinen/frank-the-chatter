@@ -47,8 +47,8 @@ def test_with_actual_context():
             if content.strip():
                 context_parts.append(f"{username}: {content}")
     
-    context_parts.append("\ntarquin_dan just mentioned you with: @gary what's up?")
-    context_parts.append("\nPlease respond as Gary to tarquin_dan.")
+    context_parts.append("\ntarquin_dan just mentioned you with: @frank what's up?")
+    context_parts.append("\nPlease respond as Frank to tarquin_dan.")
     
     formatted_context = "\n".join(context_parts)
     
@@ -59,7 +59,7 @@ def test_with_actual_context():
     
     # Load system prompt
     prompt_path = Path(__file__).parent / "config" / "prompt.txt"
-    system_prompt = prompt_path.read_text().strip() if prompt_path.exists() else "You are Gary"
+    system_prompt = prompt_path.read_text().strip() if prompt_path.exists() else "You are Frank"
     
     print(f"System prompt length: {len(system_prompt)} chars\n")
     

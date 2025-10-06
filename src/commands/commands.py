@@ -26,22 +26,22 @@ class CommandsCommand:
         commands_info = [
             {
                 "name": "!summarize [count|today|yesterday]",
-                "description": "Gary provides a thoughtful recap of the conversation",
+                "description": "Frank provides a thoughtful recap of the conversation",
                 "permission": "everyone",
             },
             {
                 "name": "!bh (be helpful)",
-                "description": "Larry takes Gary's seat, and he just wants to help you",
+                "description": "Larry takes Frank's seat, and he just wants to help you",
                 "permission": "everyone",
             },
             {
                 "name": "!roast @user",
-                "description": "Gary digs through someone's message history and serves up a custom roast",
+                "description": "Frank digs through someone's message history and serves up a custom roast",
                 "permission": "everyone",
             },
             {
                 "name": "!lobotomize [count|all]",
-                "description": "Wipe Gary's memory clean (careful with this one)",
+                "description": "Wipe Frank's memory clean (careful with this one)",
                 "permission": "dan only",
             },
         ]
