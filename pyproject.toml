@@ -1,6 +1,6 @@
 [tool.ruff]
 # Python version used by this project
-target-version = "py311"
+target-version = "py310"
 line-length = 120
 src = ["src", "tests", "tools", "scripts"]
 exclude = [
