@@ -8,7 +8,7 @@ from datetime import datetime
 import json
 
 # Add src to path so we can import config
-sys.path.append(str(Path(__file__).parent / "src"))
+sys.path.append(str(Path(__file__).parent.parent / "src"))
 
 from utils.config import Config
 
@@ -186,7 +186,7 @@ def clear_channel(channel_id, confirm=False):
             print(
                 f"This includes {message_count} messages and the conversation record itself"
             )
-            print(f"To confirm, run: python db_query.py clear {channel_id} --confirm")
+            print(f"To confirm, run: ./scripts/db_query.py clear {channel_id} --confirm")
             return
 
         try:
@@ -237,7 +237,7 @@ def clear_all(confirm=False):
                 f"This includes {total_messages} messages and {total_conversations} conversations"
             )
             print("This action CANNOT be undone!")
-            print("To confirm, run: python db_query.py clearall --confirm")
+            print("To confirm, run: ./scripts/db_query.py clearall --confirm")
             return
 
         try:
@@ -295,29 +295,29 @@ def main():
     if len(sys.argv) == 1:
         print("Frank the Chatter - Database Query Tool")
         print("\nUsage:")
-        print("  python db_query.py schema          - Show database schema")
-        print("  python db_query.py stats           - Show database statistics")
-        print("  python db_query.py filesize        - Show database file size")
+        print("  ./scripts/db_query.py schema          - Show database schema")
+        print("  ./scripts/db_query.py stats           - Show database statistics")
+        print("  ./scripts/db_query.py filesize        - Show database file size")
         print(
-            "  python db_query.py recent [N]      - Show N recent messages (default 10)"
+            "  ./scripts/db_query.py recent [N]      - Show N recent messages (default 10)"
         )
         print(
-            "  python db_query.py channel <id> [N] - Show N messages from channel (default 10)"
+            "  ./scripts/db_query.py channel <id> [N] - Show N messages from channel (default 10)"
         )
         print(
-            "  python db_query.py clear <id>      - Clear all messages from channel (requires --confirm)"
+            "  ./scripts/db_query.py clear <id>      - Clear all messages from channel (requires --confirm)"
         )
         print(
-            "  python db_query.py clearall        - Delete ALL conversations and messages (requires --confirm)"
+            "  ./scripts/db_query.py clearall        - Delete ALL conversations and messages (requires --confirm)"
         )
-        print("  python db_query.py query <SQL>     - Execute custom SQL query")
+        print("  ./scripts/db_query.py query <SQL>     - Execute custom SQL query")
         print("\nExamples:")
-        print("  python db_query.py recent 20")
-        print("  python db_query.py channel 1421920063572934678")
-        print("  python db_query.py clear 1421920063572934678 --confirm")
-        print("  python db_query.py clearall --confirm")
+        print("  ./scripts/db_query.py recent 20")
+        print("  ./scripts/db_query.py channel 1421920063572934678")
+        print("  ./scripts/db_query.py clear 1421920063572934678 --confirm")
+        print("  ./scripts/db_query.py clearall --confirm")
         print(
-            '  python db_query.py query "SELECT username, COUNT(*) FROM messages GROUP BY username"'
+            '  ./scripts/db_query.py query "SELECT username, COUNT(*) FROM messages GROUP BY username"'
         )
         return
 

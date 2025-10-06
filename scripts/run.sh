@@ -1,7 +1,7 @@
 #!/bin/bash
 # Run Frank the Chatter Discord Bot
 
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 
 # Check if .env exists
 if [ ! -f ".env" ]; then

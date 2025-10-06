@@ -27,7 +27,7 @@ echo "🔧 Upgrading discord.py-self to latest dev version..."
 
 # Patch discord.py-self to support global_name
 echo "🔧 Patching discord.py-self for display name support..."
-./patch_discord_global_name.sh
+./scripts/patch_discord_global_name.sh
 
 # Create data directories
 echo "📂 Creating data directories..."
@@ -55,9 +55,9 @@ cat >> ~/.bashrc << 'EOF'
 # Frank the Chatter aliases
 alias sv="source venv/bin/activate"
 alias pydev="python3 -m venv venv && sv && pip install --upgrade pip"
-alias frank-query="./venv/bin/python db_query.py"
-alias frank-start="nohup ./run.sh > bot.log 2>&1 &"
-alias frank-stop="./stop.sh"
+alias frank-query="./venv/bin/python scripts/db_query.py"
+alias frank-start="nohup ./scripts/run.sh > bot.log 2>&1 &"
+alias frank-stop="./scripts/stop.sh"
 alias frank-restart="frank-stop && sleep 2 && frank-start"
 alias frank-logs="tail -f bot.log"
 alias frank-status="ps aux | grep 'src/bot.py' | grep -v grep"
@@ -83,4 +83,4 @@ echo "   frank-logs           # View logs"
 echo "   frank-query stats    # Query database"
 echo ""
 echo "4. Or run manually:"
-echo "   ./run.sh             # Run in foreground"
+echo "   ./scripts/run.sh     # Run in foreground"

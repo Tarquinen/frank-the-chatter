@@ -26,7 +26,7 @@ A Discord bot that logs conversations to SQLite and responds intelligently with 
 
 4. **Run:**
    ```bash
-   ./run.sh
+    ./scripts/run.sh
    ```
 
 ## ☁️ Deploy to Cloud VM
@@ -46,7 +46,7 @@ A Discord bot that logs conversations to SQLite and responds intelligently with 
    python3 -m venv venv
    ./venv/bin/pip install -r config/requirements.txt
    # Copy your .env file with API keys
-   nohup ./run.sh > bot.log 2>&1 &
+    nohup ./scripts/run.sh > bot.log 2>&1 &
    ```
 
 ## 🤖 What Frank Does
@@ -84,9 +84,9 @@ frank-the-chatter/
 
 **Local Development:**
 ```bash
-./run.sh              # Start bot locally
+./scripts/run.sh              # Start bot locally
 python test_ai.py     # Test AI integration
-python db_query.py    # Query database
+./scripts/db_query.py    # Query database
 ```
 
 **Production (on Google Cloud VM):**

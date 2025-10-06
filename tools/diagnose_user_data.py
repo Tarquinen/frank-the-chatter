@@ -3,7 +3,7 @@
 import discord
 import sys
 from pathlib import Path
-sys.path.append(str(Path(__file__).parent / 'src'))
+sys.path.append(str(Path(__file__).parent.parent / 'src'))
 from utils.config import Config
 from utils.logger import setup_logger
 import json
