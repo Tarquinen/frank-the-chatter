@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from utils.constants import SUMMARIZE_MAX_COUNT
