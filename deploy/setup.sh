@@ -5,6 +5,10 @@
 
 set -e  # Exit on any error
 
+# Change to repo root (parent of this script)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/.."
+
 echo "🤖 Setting up Frank the Chatter..."
 
 # Update system packages
