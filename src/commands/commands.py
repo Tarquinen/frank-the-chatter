@@ -43,6 +43,11 @@ class CommandsCommand:
                 "description": "Wipe Frank's memory clean (careful with this one)",
                 "permission": "dan only",
             },
+            {
+                "name": "!random_reply",
+                "description": "Manually trigger Frank to pick a random user and reply to their most interesting message",
+                "permission": "dan only",
+            },
         ]
 
         response_lines = []

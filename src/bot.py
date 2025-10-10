@@ -1,6 +1,8 @@
 """Main Discord bot entry point for Frank the Chatter"""
 
+import asyncio
 from pathlib import Path
+import random
 import sys
 
 import discord
@@ -35,9 +37,10 @@ class FrankBot(discord.Client):
 
         self.ai_client = AIClient()
 
-        # Initialize command handler (will set bot_user_id after login)
         self.command_handler = CommandHandler(self.message_storage, self.ai_client)
         logger.info("Command handler initialized")
+
+        self.random_reply_task = None
 
     async def on_ready(self):
         """Called when bot connects successfully"""
@@ -48,11 +51,9 @@ class FrankBot(discord.Client):
         logger.info(f"Bot logged in as {self.user} (ID: {self.user.id})")
         logger.info(f"Bot is connected to {len(self.guilds)} servers")
 
-        # Log server information and conversation stats
         for guild in self.guilds:
             logger.info(f"Connected to server: {guild.name} (ID: {guild.id})")
 
-        # Show conversation statistics from database
         stats = self.message_storage.get_conversation_stats()
         db_info = self.message_storage.get_database_info()
         logger.info(f"Database contains {len(stats)} tracked conversations")
@@ -62,6 +63,14 @@ class FrankBot(discord.Client):
         for stat in stats[:TOP_CHANNELS_TO_SHOW]:
             channel_name = stat.get("channel_name", "Unknown")
             logger.info(f"  Channel {channel_name} ({stat['channel_id']}): {stat['message_count']} messages")
+
+        if self.random_reply_task is None:
+            from commands.random_reply import RandomReply
+
+            self.random_reply = RandomReply(self, self.message_storage, self.ai_client)
+            self.command_handler.set_bot(self)
+            self.random_reply_task = asyncio.create_task(self._random_reply_scheduler())
+            logger.info("Random reply scheduler started")
 
     async def on_message(self, message):
         await self._store_message(message)
@@ -137,6 +146,31 @@ class FrankBot(discord.Client):
                 )
 
         # Note: Bot's response will be automatically stored when on_message fires for it
+
+    async def _random_reply_scheduler(self):
+        """
+        Background task that executes random replies twice per day
+        Runs at random times roughly 12 hours apart
+        """
+        logger.info("Random reply scheduler initialized")
+
+        while True:
+            try:
+                hours_until_next = random.uniform(10, 14)
+                seconds_until_next = hours_until_next * 3600
+                logger.info(f"Next random reply scheduled in {hours_until_next:.1f} hours")
+
+                await asyncio.sleep(seconds_until_next)
+
+                logger.info("Executing scheduled random reply")
+                await self.random_reply.execute_random_reply()
+
+            except asyncio.CancelledError:
+                logger.info("Random reply scheduler cancelled")
+                break
+            except Exception as e:
+                logger.error(f"Error in random reply scheduler: {e}", exc_info=True)
+                await asyncio.sleep(3600)
 
 
 def main():

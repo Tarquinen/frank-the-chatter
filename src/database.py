@@ -423,3 +423,77 @@ class MessageDatabase:
 
             new_size_mb = self.get_database_size_mb()
             print(f"Database cleanup complete. Size: {new_size_mb:.1f}MB")
+
+    def get_random_user(self, exclude_user_ids: list[str]) -> dict[str, Any] | None:
+        """
+        Get a random user from the database who has messages
+
+        Args:
+            exclude_user_ids: List of user IDs to exclude (bot, dan, etc.)
+
+        Returns:
+            Dict with user_id, username, channel_id, and message_count, or None
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            placeholders = ",".join("?" * len(exclude_user_ids))
+            cursor = conn.execute(
+                f"""
+                SELECT user_id, username, channel_id, COUNT(*) as message_count
+                FROM messages
+                WHERE user_id NOT IN ({placeholders})
+                  AND content IS NOT NULL
+                  AND TRIM(content) != ''
+                GROUP BY user_id, channel_id
+                HAVING COUNT(*) >= 5
+                ORDER BY RANDOM()
+                LIMIT 1
+            """,
+                exclude_user_ids,
+            )
+
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    def get_user_messages_with_ids(
+        self, user_id: str, channel_id: str, limit: int = DEFAULT_RECENT_MESSAGES
+    ) -> list[dict[str, Any]]:
+        """
+        Get recent messages from a specific user in a channel, including discord_message_id
+
+        Args:
+            user_id: Discord user ID
+            channel_id: Discord channel ID
+            limit: Number of recent messages to retrieve
+
+        Returns:
+            List of message dictionaries with discord_message_id included
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.execute(
+                """
+                SELECT username, content, timestamp, discord_message_id, has_attachments, media_files
+                FROM messages
+                WHERE user_id = ? AND channel_id = ?
+                  AND content IS NOT NULL
+                  AND TRIM(content) != ''
+                ORDER BY timestamp DESC
+                LIMIT ?
+            """,
+                (user_id, channel_id, limit),
+            )
+
+            messages = []
+            for row in cursor.fetchall():
+                message = {
+                    "username": row["username"],
+                    "content": row["content"],
+                    "timestamp": row["timestamp"],
+                    "discord_message_id": row["discord_message_id"],
+                    "has_attachments": bool(row["has_attachments"]),
+                    "media_files": json.loads(row["media_files"]) if row["media_files"] else [],
+                }
+                messages.append(message)
+
+            return list(reversed(messages))
