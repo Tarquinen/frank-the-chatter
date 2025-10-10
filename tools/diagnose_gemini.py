@@ -69,7 +69,7 @@ def test_with_actual_context():
     # Test with tools (current config)
     config_with_tools = types.GenerateContentConfig(
         system_instruction=system_prompt,
-        max_output_tokens=min(Config.AI_MAX_TOKENS, 500),
+        max_output_tokens=min(Config.AI_MAX_TOKENS, 2000),
         temperature=1,
         top_p=0.95,
         top_k=20,
@@ -91,27 +91,27 @@ def test_with_actual_context():
             try:
                 text = response.text if hasattr(response, "text") else None
                 if text:
-                    print(f"Attempt {attempt+1}: SUCCESS - {len(text)} chars")
+                    print(f"Attempt {attempt + 1}: SUCCESS - {len(text)} chars")
                 else:
-                    print(f"Attempt {attempt+1}: EMPTY - No text")
+                    print(f"Attempt {attempt + 1}: EMPTY - No text")
                     if hasattr(response, "candidates") and response.candidates:
                         candidate = response.candidates[0]
                         print(f"  Finish reason: {candidate.finish_reason}")
                         if hasattr(candidate, "safety_ratings"):
                             print(f"  Safety ratings: {candidate.safety_ratings}")
             except Exception as e:
-                print(f"Attempt {attempt+1}: ERROR accessing text - {e}")
+                print(f"Attempt {attempt + 1}: ERROR accessing text - {e}")
                 if hasattr(response, "candidates") and response.candidates:
                     candidate = response.candidates[0]
                     print(f"  Finish reason: {candidate.finish_reason}")
 
         except Exception as e:
-            print(f"Attempt {attempt+1}: API ERROR - {e}")
+            print(f"Attempt {attempt + 1}: API ERROR - {e}")
 
     print("\n=== Test 2: Without Tools ===")
     config_no_tools = types.GenerateContentConfig(
         system_instruction=system_prompt,
-        max_output_tokens=min(Config.AI_MAX_TOKENS, 500),
+        max_output_tokens=min(Config.AI_MAX_TOKENS, 2000),
         temperature=1,
         top_p=0.95,
         top_k=20,
@@ -126,15 +126,15 @@ def test_with_actual_context():
             try:
                 text = response.text if hasattr(response, "text") else None
                 if text:
-                    print(f"Attempt {attempt+1}: SUCCESS - {len(text)} chars")
+                    print(f"Attempt {attempt + 1}: SUCCESS - {len(text)} chars")
                     print(f"  Preview: {text[:100]}")
                 else:
-                    print(f"Attempt {attempt+1}: EMPTY")
+                    print(f"Attempt {attempt + 1}: EMPTY")
             except Exception as e:
-                print(f"Attempt {attempt+1}: ERROR - {e}")
+                print(f"Attempt {attempt + 1}: ERROR - {e}")
 
         except Exception as e:
-            print(f"Attempt {attempt+1}: API ERROR - {e}")
+            print(f"Attempt {attempt + 1}: API ERROR - {e}")
 
 
 if __name__ == "__main__":
