@@ -163,16 +163,17 @@ class AIClient:
         image_urls: list[str] | None = None,
         enable_tools: bool = True,
         temperature: float = AI_DEFAULT_TEMPERATURE,
-        max_retries: int = 3,
-        initial_retry_delay: float = 2.0,
+        max_tokens: int | None = None,
     ) -> str | None:
         """Generate response using Gemini API with configurable options and retry logic"""
+        max_retries = 3
+        initial_retry_delay = 2.0
         retry_delay = initial_retry_delay
 
         for attempt in range(max_retries):
             try:
                 return await self._generate_with_config_impl(
-                    formatted_context, system_prompt, image_urls, enable_tools, temperature
+                    formatted_context, system_prompt, image_urls, enable_tools, temperature, max_tokens
                 )
             except Exception as e:
                 error_str = str(e)
@@ -215,6 +216,7 @@ class AIClient:
         image_urls: list[str] | None = None,
         enable_tools: bool = True,
         temperature: float = AI_DEFAULT_TEMPERATURE,
+        max_tokens: int | None = None,
     ) -> str | None:
         """Internal implementation of generate_with_config"""
         try:
@@ -231,7 +233,7 @@ class AIClient:
 
             config_kwargs = {
                 "system_instruction": system_prompt,
-                "max_output_tokens": Config.AI_MAX_TOKENS,
+                "max_output_tokens": max_tokens if max_tokens is not None else Config.AI_MAX_TOKENS,
                 "temperature": temperature,
                 "top_p": AI_TOP_P,
                 "top_k": AI_TOP_K,

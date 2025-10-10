@@ -3,7 +3,7 @@ import re
 import discord
 
 from utils.config import PROMPT_DIR, Config
-from utils.constants import MAX_MESSAGE_CONTEXT_FOR_AI
+from utils.constants import AI_RANDOM_REPLY_MAX_TOKENS, MAX_MESSAGE_CONTEXT_FOR_AI
 from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -113,6 +113,7 @@ class RandomReply:
                 image_urls=None,
                 enable_tools=False,
                 temperature=1.0,
+                max_tokens=AI_RANDOM_REPLY_MAX_TOKENS,
             )
 
             logger.info(f"AI Response:\n{ai_response}")
