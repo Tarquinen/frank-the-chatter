@@ -191,8 +191,60 @@ class AIClient:
         image_urls: list[str] | None = None,
         enable_tools: bool = True,
         temperature: float = AI_DEFAULT_TEMPERATURE,
+        max_retries: int = 3,
+        initial_retry_delay: float = 2.0,
     ) -> str | None:
-        """Generate response using Gemini API with configurable options"""
+        """Generate response using Gemini API with configurable options and retry logic"""
+        retry_delay = initial_retry_delay
+
+        for attempt in range(max_retries):
+            try:
+                return await self._generate_with_config_impl(
+                    formatted_context, system_prompt, image_urls, enable_tools, temperature
+                )
+            except Exception as e:
+                error_str = str(e)
+                error_type = type(e).__name__
+
+                is_retryable = (
+                    "503" in error_str
+                    or "500" in error_str
+                    or "429" in error_str
+                    or "UNAVAILABLE" in error_str
+                    or "RESOURCE_EXHAUSTED" in error_str
+                    or "ResourceExhausted" in error_type
+                    or "TooManyRequests" in error_type
+                    or "ServerError" in error_type
+                    or "DeadlineExceeded" in error_type
+                    or "overloaded" in error_str.lower()
+                )
+
+                if is_retryable:
+                    if attempt < max_retries - 1:
+                        logger.warning(
+                            f"Gemini API temporary error (attempt {attempt + 1}/{max_retries}): {e}. "
+                            f"Retrying in {retry_delay:.1f}s..."
+                        )
+                        await asyncio.sleep(retry_delay)
+                        retry_delay *= 2
+                        continue
+                    else:
+                        logger.error(f"Gemini API error after {max_retries} attempts: {e}")
+                else:
+                    logger.error(f"Gemini API non-retryable error: {e}", exc_info=True)
+                    break
+
+        return None
+
+    async def _generate_with_config_impl(
+        self,
+        formatted_context: str,
+        system_prompt: str,
+        image_urls: list[str] | None = None,
+        enable_tools: bool = True,
+        temperature: float = AI_DEFAULT_TEMPERATURE,
+    ) -> str | None:
+        """Internal implementation of generate_with_config"""
         try:
             uploaded_files = []
 
@@ -298,8 +350,7 @@ class AIClient:
             return text
 
         except Exception as e:
-            logger.error(f"Gemini API error: {e}", exc_info=True)
-            return None
+            raise
 
     async def _generate_conversation_response(
         self, formatted_context: str, image_urls: list[str] | None = None
