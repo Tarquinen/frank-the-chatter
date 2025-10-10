@@ -34,13 +34,9 @@ class LobotomizeCommand:
                 try:
                     limit = int(args[0])
                     if limit <= 0:
-                        return {
-                            "error": "Nice try, but I need a positive number of messages to forget."
-                        }
+                        return {"error": "Nice try, but I need a positive number of messages to forget."}
                 except ValueError:
-                    return {
-                        "error": f"'{args[0]}' isn't a number. Use a number or 'all' to wipe everything."
-                    }
+                    return {"error": f"'{args[0]}' isn't a number. Use a number or 'all' to wipe everything."}
 
         return {"delete_all": delete_all, "limit": limit}
 
@@ -106,21 +102,13 @@ class LobotomizeCommand:
 
         try:
             if delete_all:
-                deleted_count = self.message_storage.delete_all_channel_messages(
-                    channel_id
-                )
-                logger.info(
-                    f"Lobotomize ALL: deleted {deleted_count} messages and cleared conversation record"
-                )
+                deleted_count = self.message_storage.delete_all_channel_messages(channel_id)
+                logger.info(f"Lobotomize ALL: deleted {deleted_count} messages and cleared conversation record")
             else:
                 limit = limit if limit is not None else MAX_MESSAGE_CONTEXT_FOR_AI
                 limit += 2
-                deleted_count = self.message_storage.delete_recent_messages(
-                    channel_id, limit
-                )
-                logger.info(
-                    f"Lobotomize: deleted {deleted_count} messages including command and response"
-                )
+                deleted_count = self.message_storage.delete_recent_messages(channel_id, limit)
+                logger.info(f"Lobotomize: deleted {deleted_count} messages including command and response")
 
             if deleted_count > 0:
                 response = self.get_completion_response(deleted_count, delete_all)

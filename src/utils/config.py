@@ -27,19 +27,13 @@ class Config:
 
     # AI API Configuration
     AI_API_KEY = os.getenv("GEMINI_API_KEY")
-    AI_API_BASE_URL = os.getenv(
-        "AI_API_BASE_URL", "https://generativelanguage.googleapis.com/v1"
-    )
+    AI_API_BASE_URL = os.getenv("AI_API_BASE_URL", "https://generativelanguage.googleapis.com/v1")
     AI_MODEL = os.getenv("AI_MODEL", "gemini-2.5-flash")
     AI_MAX_TOKENS = int(os.getenv("AI_MAX_TOKENS", "2000"))
 
     # Storage Configuration (absolute paths from project root)
-    DATABASE_PATH = os.getenv(
-        "DATABASE_PATH", str(PROJECT_ROOT / "data" / "conversations.db")
-    )
-    LOG_FILE_PATH = os.getenv(
-        "LOG_FILE_PATH", str(PROJECT_ROOT / "data" / "logs" / "bot.log")
-    )
+    DATABASE_PATH = os.getenv("DATABASE_PATH", str(PROJECT_ROOT / "data" / "conversations.db"))
+    LOG_FILE_PATH = os.getenv("LOG_FILE_PATH", str(PROJECT_ROOT / "data" / "logs" / "bot.log"))
 
     # Logging
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
@@ -52,9 +46,7 @@ class Config:
         missing = [var for var in required_vars if not getattr(cls, var)]
 
         if missing:
-            raise ValueError(
-                f"Missing required environment variables: {', '.join(missing)}"
-            )
+            raise ValueError(f"Missing required environment variables: {', '.join(missing)}")
 
         # Create directories if they don't exist
         Path(cls.DATABASE_PATH).parent.mkdir(parents=True, exist_ok=True)

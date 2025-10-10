@@ -36,10 +36,7 @@ class SummarizeCommand:
             except ValueError:
                 return {
                     "type": "error",
-                    "error": (
-                        f"Invalid argument '{arg}'. Usage: !summarize "
-                        "[count|today|yesterday]"
-                    ),
+                    "error": (f"Invalid argument '{arg}'. Usage: !summarize " "[count|today|yesterday]"),
                 }
 
     async def execute(self, message, args: list) -> str:

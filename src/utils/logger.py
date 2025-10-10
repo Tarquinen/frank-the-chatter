@@ -20,12 +20,10 @@ def setup_logger(name: str = "frank_bot") -> logging.Logger:
 
     # Create formatters
     detailed_formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s'
+        "%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s"
     )
 
-    simple_formatter = logging.Formatter(
-        '%(asctime)s - %(levelname)s - %(message)s'
-    )
+    simple_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 
     # Console handler
     console_handler = logging.StreamHandler(sys.stdout)
@@ -36,10 +34,7 @@ def setup_logger(name: str = "frank_bot") -> logging.Logger:
     # Rotating file handler
     log_file = Path(Config.LOG_FILE_PATH)
     file_handler = RotatingFileHandler(
-        log_file,
-        maxBytes=LOG_FILE_MAX_BYTES,
-        backupCount=LOG_FILE_BACKUP_COUNT,
-        encoding='utf-8'
+        log_file, maxBytes=LOG_FILE_MAX_BYTES, backupCount=LOG_FILE_BACKUP_COUNT, encoding="utf-8"
     )
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(detailed_formatter)

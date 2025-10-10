@@ -61,9 +61,7 @@ class FrankBot(discord.Client):
         )
         for stat in stats[:TOP_CHANNELS_TO_SHOW]:
             channel_name = stat.get("channel_name", "Unknown")
-            logger.info(
-                f"  Channel {channel_name} ({stat['channel_id']}): {stat['message_count']} messages"
-            )
+            logger.info(f"  Channel {channel_name} ({stat['channel_id']}): {stat['message_count']} messages")
 
     async def on_message(self, message):
         await self._store_message(message)
@@ -78,16 +76,10 @@ class FrankBot(discord.Client):
         try:
             self.message_storage.store_message(message)
 
-            channel_name = getattr(
-                message.channel, "name", f"Channel-{message.channel.id}"
-            )
+            channel_name = getattr(message.channel, "name", f"Channel-{message.channel.id}")
             preview = message.content[:LOG_MESSAGE_PREVIEW_LENGTH]
-            overflow = (
-                "..." if len(message.content) > LOG_MESSAGE_PREVIEW_LENGTH else ""
-            )
-            log_msg = (
-                f"[{channel_name}] {message.author.display_name}: {preview}{overflow}"
-            )
+            overflow = "..." if len(message.content) > LOG_MESSAGE_PREVIEW_LENGTH else ""
+            log_msg = f"[{channel_name}] {message.author.display_name}: {preview}{overflow}"
             if message.attachments:
                 log_msg += f" [{len(message.attachments)} attachment(s)]"
             logger.debug(log_msg)
@@ -109,31 +101,19 @@ class FrankBot(discord.Client):
                     f"Command detected: !{command_name} by {message.author.display_name} (ID: {message.author.id})"
                 )
 
-                command_result = await self.command_handler.handle_command(
-                    message, command_name, args
-                )
+                command_result = await self.command_handler.handle_command(message, command_name, args)
                 if command_result:
-                    sent_message = await message.channel.send(
-                        command_result["response"]
-                    )
+                    sent_message = await message.channel.send(command_result["response"])
 
                     if "execute_after_send" in command_result:
-                        await command_result["execute_after_send"](
-                            message, sent_message
-                        )
+                        await command_result["execute_after_send"](message, sent_message)
 
                     return
 
-            recent_messages = self.message_storage.get_recent_messages(
-                channel_id, MAX_MESSAGE_CONTEXT_FOR_AI
-            )
+            recent_messages = self.message_storage.get_recent_messages(channel_id, MAX_MESSAGE_CONTEXT_FOR_AI)
 
-            logger.info(
-                f"Bot mentioned in {getattr(message.channel, 'name', 'DM')} by {message.author.display_name}"
-            )
-            logger.info(
-                f"Available context: {len(recent_messages)} messages from database"
-            )
+            logger.info(f"Bot mentioned in {getattr(message.channel, 'name', 'DM')} by {message.author.display_name}")
+            logger.info(f"Available context: {len(recent_messages)} messages from database")
             # Generate AI response
             try:
                 ai_response = await self.ai_client.generate_response(
@@ -180,6 +160,7 @@ def main():
             logger.error(f"Bot crashed: {e}")
             logger.info(f"Attempting to reconnect in {reconnect_delay} seconds...")
             import time
+
             time.sleep(reconnect_delay)
             reconnect_delay = min(reconnect_delay * 2, 300)
 

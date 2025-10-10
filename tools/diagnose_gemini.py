@@ -4,7 +4,7 @@
 from pathlib import Path
 import sys
 
-sys.path.append(str(Path(__file__).parent.parent / 'src'))
+sys.path.append(str(Path(__file__).parent.parent / "src"))
 
 import google.genai as genai
 from google.genai import types
@@ -32,7 +32,7 @@ def test_with_actual_context():
         print("No messages in database")
         return
 
-    group_channel_id = channels[0]['channel_id']
+    group_channel_id = channels[0]["channel_id"]
     print(f"Testing with channel: {group_channel_id}")
     print(f"Messages in channel: {channels[0]['message_count']}\n")
 
@@ -45,8 +45,8 @@ def test_with_actual_context():
     if recent:
         context_parts.append("Recent conversation context:")
         for msg in recent[-10:]:  # Last 10 messages
-            username = msg.get('username', 'Unknown')
-            content = msg.get('content', '')
+            username = msg.get("username", "Unknown")
+            content = msg.get("content", "")
             if content.strip():
                 context_parts.append(f"{username}: {content}")
 
@@ -84,26 +84,24 @@ def test_with_actual_context():
     for attempt in range(5):
         try:
             response = client.models.generate_content(
-                model=Config.AI_MODEL,
-                contents=formatted_context,
-                config=config_with_tools
+                model=Config.AI_MODEL, contents=formatted_context, config=config_with_tools
             )
 
             # Try to access text
             try:
-                text = response.text if hasattr(response, 'text') else None
+                text = response.text if hasattr(response, "text") else None
                 if text:
                     print(f"Attempt {attempt+1}: SUCCESS - {len(text)} chars")
                 else:
                     print(f"Attempt {attempt+1}: EMPTY - No text")
-                    if hasattr(response, 'candidates') and response.candidates:
+                    if hasattr(response, "candidates") and response.candidates:
                         candidate = response.candidates[0]
                         print(f"  Finish reason: {candidate.finish_reason}")
-                        if hasattr(candidate, 'safety_ratings'):
+                        if hasattr(candidate, "safety_ratings"):
                             print(f"  Safety ratings: {candidate.safety_ratings}")
             except Exception as e:
                 print(f"Attempt {attempt+1}: ERROR accessing text - {e}")
-                if hasattr(response, 'candidates') and response.candidates:
+                if hasattr(response, "candidates") and response.candidates:
                     candidate = response.candidates[0]
                     print(f"  Finish reason: {candidate.finish_reason}")
 
@@ -122,13 +120,11 @@ def test_with_actual_context():
     for attempt in range(5):
         try:
             response = client.models.generate_content(
-                model=Config.AI_MODEL,
-                contents=formatted_context,
-                config=config_no_tools
+                model=Config.AI_MODEL, contents=formatted_context, config=config_no_tools
             )
 
             try:
-                text = response.text if hasattr(response, 'text') else None
+                text = response.text if hasattr(response, "text") else None
                 if text:
                     print(f"Attempt {attempt+1}: SUCCESS - {len(text)} chars")
                     print(f"  Preview: {text[:100]}")
@@ -139,6 +135,7 @@ def test_with_actual_context():
 
         except Exception as e:
             print(f"Attempt {attempt+1}: API ERROR - {e}")
+
 
 if __name__ == "__main__":
     test_with_actual_context()

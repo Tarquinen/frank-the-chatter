@@ -57,12 +57,8 @@ class MessageDatabase:
             """)
 
             # Create indexes for fast queries
-            conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_channel_timestamp ON messages(channel_id, timestamp DESC)"
-            )
-            conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_discord_message_id ON messages(discord_message_id)"
-            )
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_channel_timestamp ON messages(channel_id, timestamp DESC)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_discord_message_id ON messages(discord_message_id)")
 
             conn.commit()
 
@@ -132,9 +128,7 @@ class MessageDatabase:
             conn.commit()
             return message_id
 
-    def get_recent_messages(
-        self, channel_id: str, limit: int = DEFAULT_RECENT_MESSAGES
-    ) -> list[dict[str, Any]]:
+    def get_recent_messages(self, channel_id: str, limit: int = DEFAULT_RECENT_MESSAGES) -> list[dict[str, Any]]:
         """
         Get recent messages from a channel for AI context
 
@@ -165,9 +159,7 @@ class MessageDatabase:
                     "content": row["content"],
                     "timestamp": row["timestamp"],
                     "has_attachments": bool(row["has_attachments"]),
-                    "media_files": json.loads(row["media_files"])
-                    if row["media_files"]
-                    else [],
+                    "media_files": json.loads(row["media_files"]) if row["media_files"] else [],
                 }
                 messages.append(message)
 
@@ -185,14 +177,10 @@ class MessageDatabase:
             Number of messages deleted
         """
         with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.execute(
-                "DELETE FROM messages WHERE channel_id = ?", (channel_id,)
-            )
+            cursor = conn.execute("DELETE FROM messages WHERE channel_id = ?", (channel_id,))
             deleted_messages = cursor.rowcount
 
-            conn.execute(
-                "DELETE FROM conversations WHERE channel_id = ?", (channel_id,)
-            )
+            conn.execute("DELETE FROM conversations WHERE channel_id = ?", (channel_id,))
 
             conn.commit()
             return deleted_messages
@@ -250,9 +238,7 @@ class MessageDatabase:
 
             return 0
 
-    def cleanup_old_messages(
-        self, channel_id: str, keep_last: int = MAX_MESSAGES_PER_CHANNEL
-    ):
+    def cleanup_old_messages(self, channel_id: str, keep_last: int = MAX_MESSAGES_PER_CHANNEL):
         with sqlite3.connect(self.db_path) as conn:
             # Find messages to delete (older than the last N messages)
             cursor = conn.execute(
@@ -293,15 +279,11 @@ class MessageDatabase:
                 )
 
                 conn.commit()
-                print(
-                    f"Cleaned up {len(old_message_ids)} old messages from channel {channel_id}"
-                )
+                print(f"Cleaned up {len(old_message_ids)} old messages from channel {channel_id}")
 
     def get_message_count(self, channel_id: str) -> int:
         with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.execute(
-                "SELECT COUNT(*) FROM messages WHERE channel_id = ?", (channel_id,)
-            )
+            cursor = conn.execute("SELECT COUNT(*) FROM messages WHERE channel_id = ?", (channel_id,))
             return cursor.fetchone()[0]
 
     def get_channels_with_messages(self) -> list[dict[str, Any]]:
@@ -369,9 +351,7 @@ class MessageDatabase:
             conn.commit()
 
             if deleted_count > 0:
-                print(
-                    f"Cleaned up {deleted_count} messages older than {days_to_keep} days"
-                )
+                print(f"Cleaned up {deleted_count} messages older than {days_to_keep} days")
 
             return deleted_count
 
@@ -408,9 +388,7 @@ class MessageDatabase:
                     "content": row["content"],
                     "timestamp": row["timestamp"],
                     "has_attachments": bool(row["has_attachments"]),
-                    "media_files": json.loads(row["media_files"])
-                    if row["media_files"]
-                    else [],
+                    "media_files": json.loads(row["media_files"]) if row["media_files"] else [],
                 }
                 messages.append(message)
 
@@ -427,27 +405,21 @@ class MessageDatabase:
         max_size_mb = max_size_gb * MB_PER_GB
 
         if current_size_mb > max_size_mb:
-            print(
-                f"Database size ({current_size_mb:.1f}MB) exceeds limit ({max_size_mb:.1f}MB)"
-            )
+            print(f"Database size ({current_size_mb:.1f}MB) exceeds limit ({max_size_mb:.1f}MB)")
 
             # First try cleaning old messages (older than CLEANUP_DAYS_PRIMARY days)
             deleted_by_age = self.cleanup_old_messages_by_age(CLEANUP_DAYS_PRIMARY)
 
             # If still too large, clean older messages (older than CLEANUP_DAYS_SECONDARY days)
             if self.get_database_size_mb() > max_size_mb:
-                deleted_by_age += self.cleanup_old_messages_by_age(
-                    CLEANUP_DAYS_SECONDARY
-                )
+                deleted_by_age += self.cleanup_old_messages_by_age(CLEANUP_DAYS_SECONDARY)
 
             # If still too large, limit per-channel messages
             if self.get_database_size_mb() > max_size_mb:
                 channels = self.get_channels_with_messages()
                 for channel in channels:
                     if channel["message_count"] > MAX_MESSAGES_PER_CHANNEL:
-                        self.cleanup_old_messages(
-                            channel["channel_id"], CLEANUP_CHANNEL_KEEP_LAST
-                        )
+                        self.cleanup_old_messages(channel["channel_id"], CLEANUP_CHANNEL_KEEP_LAST)
 
             new_size_mb = self.get_database_size_mb()
             print(f"Database cleanup complete. Size: {new_size_mb:.1f}MB")

@@ -9,10 +9,7 @@ import logging
 from ai_client import AIClient
 from utils.logger import setup_logger
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 logger = setup_logger()
 
@@ -55,17 +52,13 @@ class AIClientTester:
         self.log_data("USER MESSAGE", user_message)
         self.log_data("MENTIONED BY", mentioned_by)
 
-        formatted_context, image_urls = self.client._format_context_for_ai(
-            context_messages, mentioned_by
-        )
+        formatted_context, image_urls = self.client._format_context_for_ai(context_messages, mentioned_by)
 
         self.log_data("FORMATTED CONTEXT SENT TO AI", formatted_context)
         self.log_data("IMAGE URLS", str(image_urls))
 
         print("\nGenerating AI response...")
-        response = await self.client.generate_response(
-            context_messages, mentioned_by
-        )
+        response = await self.client.generate_response(context_messages, mentioned_by)
 
         self.log_data("AI RESPONSE", response or "None")
 
@@ -78,7 +71,7 @@ class AIClientTester:
 
 async def main():
     print("Starting AI Client Test")
-    print("="*80)
+    print("=" * 80)
 
     tester = AIClientTester()
 

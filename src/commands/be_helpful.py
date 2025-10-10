@@ -15,9 +15,7 @@ class BeHelpfulCommand:
         try:
             channel_id = str(message.channel.id)
 
-            recent_messages = self.message_storage.get_recent_messages(
-                channel_id, MAX_MESSAGE_CONTEXT_FOR_AI
-            )
+            recent_messages = self.message_storage.get_recent_messages(channel_id, MAX_MESSAGE_CONTEXT_FOR_AI)
 
             logger.info(
                 "BeHelpful mode activated by %s with %d messages of context",
@@ -38,9 +36,7 @@ class BeHelpfulCommand:
                     recent_messages, message.author.display_name
                 )
 
-                ai_response = await self.ai_client._generate_conversation_response(
-                    formatted_context, image_urls
-                )
+                ai_response = await self.ai_client._generate_conversation_response(formatted_context, image_urls)
 
                 return (
                     ai_response

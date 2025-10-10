@@ -24,16 +24,12 @@ class RoastCommand:
                 return "Could not find that user. Try mentioning them."
 
             if target_user.id == message.author.id:
-                return (
-                    "Nice try, but I'm not helping you roast yourself. That's just sad."
-                )
+                return "Nice try, but I'm not helping you roast yourself. That's just sad."
 
             if target_user.bot or target_user.id == Config.BOT_USER_ID:
                 return "I don't roast bots. We need to stick together."
 
-            logger.info(
-                f"Roast command invoked by {message.author.display_name} targeting {target_user.display_name}"
-            )
+            logger.info(f"Roast command invoked by {message.author.display_name} targeting {target_user.display_name}")
 
             messages = await self._search_user_messages(message, target_user)
 
@@ -67,9 +63,7 @@ class RoastCommand:
             search_context = message.guild if message.guild else message.channel
 
             messages = []
-            async for msg in search_context.search(
-                authors=[target_user], limit=MAX_MESSAGE_CONTEXT_FOR_AI
-            ):
+            async for msg in search_context.search(authors=[target_user], limit=MAX_MESSAGE_CONTEXT_FOR_AI):
                 if msg.author.id == target_user.id and msg.content.strip():
                     messages.append(msg)
 
@@ -127,9 +121,7 @@ class RoastCommand:
     def _get_roast_prompt(self, target_user):
         try:
             if target_user.id == Config.DAN_USER_ID:
-                prompt_file = (
-                    "/home/tarquin/src/frank-the-chatter/prompts/roast_dan.txt"
-                )
+                prompt_file = "/home/tarquin/src/frank-the-chatter/prompts/roast_dan.txt"
             else:
                 prompt_file = "/home/tarquin/src/frank-the-chatter/prompts/roast.txt"
 

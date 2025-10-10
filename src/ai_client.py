@@ -36,9 +36,7 @@ class AIClient:
         """Initialize the Gemini client"""
         try:
             if not Config.AI_API_KEY:
-                logger.warning(
-                    "GEMINI_API_KEY not found - AI responses will be disabled"
-                )
+                logger.warning("GEMINI_API_KEY not found - AI responses will be disabled")
                 return
 
             # Initialize Gemini client with API key
@@ -62,9 +60,7 @@ class AIClient:
             logger.error(f"Failed to load system prompt: {e}")
             return "You are Frank, an AI in a Discord chat."
 
-    async def generate_response(
-        self, context_messages: list[dict], mentioned_by: str
-    ) -> str | None:
+    async def generate_response(self, context_messages: list[dict], mentioned_by: str) -> str | None:
         """
         Generate an AI response based on conversation context
 
@@ -81,17 +77,13 @@ class AIClient:
 
         try:
             # Format conversation context for AI
-            formatted_context, image_urls = self._format_context_for_ai(
-                context_messages, mentioned_by
-            )
+            formatted_context, image_urls = self._format_context_for_ai(context_messages, mentioned_by)
 
             # Generate response using Gemini
             response = await self._generate_conversation_response(formatted_context, image_urls)
 
             if response:
-                logger.info(
-                    f"Generated AI response for {mentioned_by} ({len(response)} characters)"
-                )
+                logger.info(f"Generated AI response for {mentioned_by} ({len(response)} characters)")
                 return response
             else:
                 logger.warning("AI generated empty response")
@@ -101,9 +93,7 @@ class AIClient:
             logger.error(f"Error generating AI response: {e}")
             return f"Hi {mentioned_by}! I'm having some trouble with my AI right now, but I'm still here!"
 
-    def _format_context_for_ai(
-        self, context_messages: list[dict], mentioned_by: str
-    ):
+    def _format_context_for_ai(self, context_messages: list[dict], mentioned_by: str):
         """Format conversation context for the AI model, extracting image URLs"""
         context_parts = []
         image_urls = []
@@ -111,31 +101,19 @@ class AIClient:
         # Add recent conversation context
         if context_messages:
             context_parts.append("Recent conversation context:")
-            for msg in context_messages[
-                -MAX_MESSAGE_CONTEXT_FOR_AI :
-            ]:
+            for msg in context_messages[-MAX_MESSAGE_CONTEXT_FOR_AI:]:
                 username = msg.get("username", "Unknown")
                 content = msg.get("content", "")
 
-                message_text = (
-                    f"{username}: {content}" if content.strip() else f"{username}:"
-                )
+                message_text = f"{username}: {content}" if content.strip() else f"{username}:"
 
                 if msg.get("has_attachments") and msg.get("media_files"):
                     try:
-                        attachments = (
-                            msg["media_files"]
-                            if isinstance(msg["media_files"], list)
-                            else []
-                        )
+                        attachments = msg["media_files"] if isinstance(msg["media_files"], list) else []
                         for att in attachments:
                             url = att.get("url", "")
                             content_type = att.get("content_type", "")
-                            if (
-                                url
-                                and content_type
-                                and content_type.startswith("image/")
-                            ):
+                            if url and content_type and content_type.startswith("image/"):
                                 image_urls.append(url)
                                 message_text += " [attached image]"
                     except Exception as e:
@@ -157,23 +135,17 @@ class AIClient:
         try:
             async with aiohttp.ClientSession() as session, session.get(url) as resp:
                 if resp.status != 200:
-                    logger.warning(
-                        f"Failed to download image from {url}: HTTP {resp.status}"
-                    )
+                    logger.warning(f"Failed to download image from {url}: HTTP {resp.status}")
                     return None
 
                 image_data = await resp.read()
 
-                with tempfile.NamedTemporaryFile(
-                    delete=False, suffix=".jpg"
-                ) as tmp_file:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp_file:
                     tmp_file.write(image_data)
                     tmp_path = tmp_file.name
 
                 loop = asyncio.get_event_loop()
-                uploaded_file = await loop.run_in_executor(
-                    None, lambda: self.client.files.upload(file=tmp_path)
-                )
+                uploaded_file = await loop.run_in_executor(None, lambda: self.client.files.upload(file=tmp_path))
 
                 Path(tmp_path).unlink()
 
@@ -266,19 +238,19 @@ class AIClient:
                 "safety_settings": [
                     types.SafetySetting(
                         category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
-                        threshold=types.HarmBlockThreshold.BLOCK_NONE
+                        threshold=types.HarmBlockThreshold.BLOCK_NONE,
                     ),
                     types.SafetySetting(
                         category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-                        threshold=types.HarmBlockThreshold.BLOCK_NONE
+                        threshold=types.HarmBlockThreshold.BLOCK_NONE,
                     ),
                     types.SafetySetting(
                         category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-                        threshold=types.HarmBlockThreshold.BLOCK_NONE
+                        threshold=types.HarmBlockThreshold.BLOCK_NONE,
                     ),
                     types.SafetySetting(
                         category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-                        threshold=types.HarmBlockThreshold.BLOCK_NONE
+                        threshold=types.HarmBlockThreshold.BLOCK_NONE,
                     ),
                 ],
             }
@@ -292,23 +264,17 @@ class AIClient:
             config = types.GenerateContentConfig(**config_kwargs)
 
             loop = asyncio.get_event_loop()
-            response = await loop.run_in_executor(
-                None, self._sync_generate_content, content_parts, config
-            )
+            response = await loop.run_in_executor(None, self._sync_generate_content, content_parts, config)
 
             if self.client:
                 for uploaded_file in uploaded_files:
                     try:
                         await loop.run_in_executor(
                             None,
-                            lambda f=uploaded_file: self.client.files.delete(
-                                name=f.name
-                            ),
+                            lambda f=uploaded_file: self.client.files.delete(name=f.name),
                         )
                     except Exception as e:
-                        logger.warning(
-                            f"Failed to delete uploaded file {uploaded_file.name}: {e}"
-                        )
+                        logger.warning(f"Failed to delete uploaded file {uploaded_file.name}: {e}")
 
             if not response:
                 logger.warning("Gemini API returned None response")
@@ -321,10 +287,7 @@ class AIClient:
                 if hasattr(response, "candidates") and response.candidates:
                     candidate = response.candidates[0]
                     logger.warning(f"Finish reason: {candidate.finish_reason}")
-                    if (
-                        hasattr(candidate, "safety_ratings")
-                        and candidate.safety_ratings
-                    ):
+                    if hasattr(candidate, "safety_ratings") and candidate.safety_ratings:
                         logger.warning(f"Safety ratings: {candidate.safety_ratings}")
                     if candidate.finish_reason == "SAFETY":
                         logger.error("Response blocked by safety filter")
@@ -342,14 +305,12 @@ class AIClient:
                 return None
 
             if len(text) > AI_MAX_RESPONSE_CHARS:
-                logger.warning(
-                    f"Response too long ({len(text)} chars), truncating to {AI_MAX_RESPONSE_CHARS}"
-                )
+                logger.warning(f"Response too long ({len(text)} chars), truncating to {AI_MAX_RESPONSE_CHARS}")
                 text = text[:AI_RESPONSE_TRUNCATE_TO] + "..."
 
             return text
 
-        except Exception as e:
+        except Exception:
             raise
 
     async def _generate_conversation_response(
@@ -367,9 +328,7 @@ class AIClient:
     def _sync_generate_content(self, content, config: types.GenerateContentConfig):
         """Synchronous wrapper for Gemini API call"""
         if self.client:
-            return self.client.models.generate_content(
-                model=Config.AI_MODEL, contents=content, config=config
-            )
+            return self.client.models.generate_content(model=Config.AI_MODEL, contents=content, config=config)
         return None
 
     def is_available(self) -> bool:
@@ -403,6 +362,7 @@ class AIClient:
                 if timestamp:
                     try:
                         from datetime import datetime
+
                         dt = datetime.fromisoformat(timestamp) if isinstance(timestamp, str) else timestamp
                         time_str = dt.strftime("%H:%M")
                     except Exception as te:
@@ -428,7 +388,7 @@ class AIClient:
                 system_prompt=summarize_prompt,
                 image_urls=None,
                 enable_tools=False,
-            temperature=AI_DEFAULT_TEMPERATURE,
+                temperature=AI_DEFAULT_TEMPERATURE,
             )
 
         except Exception as e:

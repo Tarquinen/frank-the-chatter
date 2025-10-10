@@ -62,9 +62,7 @@ class MessageStorage:
                 attachments=attachments if attachments else None,
             )
 
-            logger.debug(
-                f"Stored message {discord_message_id} from {username} in channel {channel_id}"
-            )
+            logger.debug(f"Stored message {discord_message_id} from {username} in channel {channel_id}")
 
             # Periodic cleanup check
             self.maybe_cleanup_channel(channel_id)
@@ -78,9 +76,7 @@ class MessageStorage:
             logger.error(f"Failed to store message {discord_message_id}: {e}")
             raise
 
-    def get_recent_messages(
-        self, channel_id: str, limit: int = 100
-    ) -> list[dict[str, Any]]:
+    def get_recent_messages(self, channel_id: str, limit: int = 100) -> list[dict[str, Any]]:
         """
         Get recent messages from a channel for AI context
 
@@ -93,9 +89,7 @@ class MessageStorage:
         """
         try:
             messages = self.db.get_recent_messages(channel_id, limit)
-            logger.debug(
-                f"Retrieved {len(messages)} messages from channel {channel_id}"
-            )
+            logger.debug(f"Retrieved {len(messages)} messages from channel {channel_id}")
             return messages
         except Exception as e:
             logger.error(f"Failed to get messages from channel {channel_id}: {e}")
@@ -116,17 +110,13 @@ class MessageStorage:
             List of message dictionaries in chronological order
         """
         try:
-            messages = self.db.get_messages_by_date_range(
-                channel_id, start_date, end_date
-            )
+            messages = self.db.get_messages_by_date_range(channel_id, start_date, end_date)
             logger.debug(
                 f"Retrieved {len(messages)} messages from channel {channel_id} between {start_date} and {end_date}"
             )
             return messages
         except Exception as e:
-            logger.error(
-                f"Failed to get messages by date range from channel {channel_id}: {e}"
-            )
+            logger.error(f"Failed to get messages by date range from channel {channel_id}: {e}")
             return []
 
     def delete_recent_messages(self, channel_id: str, limit: int) -> int:
@@ -142,9 +132,7 @@ class MessageStorage:
         """
         try:
             deleted_count = self.db.delete_recent_messages(channel_id, limit)
-            logger.info(
-                f"Deleted {deleted_count} recent messages from channel {channel_id}"
-            )
+            logger.info(f"Deleted {deleted_count} recent messages from channel {channel_id}")
             return deleted_count
         except Exception as e:
             logger.error(f"Failed to delete messages from channel {channel_id}: {e}")
@@ -167,9 +155,7 @@ class MessageStorage:
             )
             return deleted_count
         except Exception as e:
-            logger.error(
-                f"Failed to delete all messages from channel {channel_id}: {e}"
-            )
+            logger.error(f"Failed to delete all messages from channel {channel_id}: {e}")
             return 0
 
     def maybe_cleanup_channel(self, channel_id: str):
@@ -178,9 +164,7 @@ class MessageStorage:
 
             # Only cleanup if we exceed the limit by a reasonable margin
             if message_count > MAX_MESSAGES_PER_CHANNEL + MESSAGES_CLEANUP_MARGIN:
-                logger.info(
-                    f"Cleaning up channel {channel_id}: {message_count} messages"
-                )
+                logger.info(f"Cleaning up channel {channel_id}: {message_count} messages")
                 self.db.cleanup_old_messages(channel_id, MAX_MESSAGES_PER_CHANNEL)
 
         except Exception as e:
@@ -202,9 +186,7 @@ class MessageStorage:
             logger.debug(f"Database size check: {current_size_mb:.1f}MB")
 
             if current_size_mb > (MAX_DATABASE_SIZE_GB * MB_PER_GB):
-                logger.warning(
-                    f"Database size ({current_size_mb:.1f}MB) approaching limit, starting cleanup"
-                )
+                logger.warning(f"Database size ({current_size_mb:.1f}MB) approaching limit, starting cleanup")
                 self.db.cleanup_if_database_too_large(MAX_DATABASE_SIZE_GB)
 
         except Exception as e:

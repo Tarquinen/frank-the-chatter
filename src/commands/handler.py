@@ -52,9 +52,7 @@ class CommandHandler:
 
         return None
 
-    async def handle_command(
-        self, message, command_name: str, args: list
-    ) -> dict[str, Any] | None:
+    async def handle_command(self, message, command_name: str, args: list) -> dict[str, Any] | None:
         """
         Execute a command and return response with metadata
 
@@ -93,9 +91,7 @@ class CommandHandler:
 
             return {
                 "response": command.get_processing_response(delete_all),
-                "execute_after_send": lambda msg, sent_msg: command.execute(
-                    msg, sent_msg, limit, delete_all
-                ),
+                "execute_after_send": lambda msg, sent_msg: command.execute(msg, sent_msg, limit, delete_all),
             }
 
         return None

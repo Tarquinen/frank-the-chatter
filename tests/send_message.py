@@ -13,9 +13,10 @@ if not TOKEN:
 if CHANNEL_ID == 0:
     raise ValueError("CHANNEL_ID environment variable is required")
 
+
 class MyClient(discord.Client):
     async def on_ready(self):
-        print(f'Logged on as {self.user}!')
+        print(f"Logged on as {self.user}!")
 
         channel = self.get_channel(CHANNEL_ID)
 
@@ -28,6 +29,7 @@ class MyClient(discord.Client):
             print("Please make sure the ID is correct and you have access to the channel.")
 
         await self.close()
+
 
 client = MyClient()
 client.run(TOKEN)

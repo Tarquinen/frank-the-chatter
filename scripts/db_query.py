@@ -21,9 +21,7 @@ def show_schema():
     """Show database schema"""
     print("=== DATABASE SCHEMA ===\n")
     with connect_db() as conn:
-        cursor = conn.execute(
-            "SELECT sql FROM sqlite_master WHERE type='table' ORDER BY name"
-        )
+        cursor = conn.execute("SELECT sql FROM sqlite_master WHERE type='table' ORDER BY name")
         for row in cursor:
             if row[0]:  # Skip empty rows
                 print(row[0] + ";\n")
@@ -122,7 +120,7 @@ def show_recent_messages(limit=10):
             if has_attachments and media_files:
                 try:
                     attachments = json.loads(media_files)
-                    urls = [att.get('url', '') for att in attachments if att.get('url')]
+                    urls = [att.get("url", "") for att in attachments if att.get("url")]
                     media_info = f" [📎 {', '.join(urls)}]" if urls else " [📎]"
                 except Exception:
                     media_info = " [📎]"
@@ -176,35 +174,23 @@ def clear_channel(channel_id, confirm=False):
         channel_display = channel_name if channel_name else channel_id
 
         if not confirm:
-            print(
-                f"WARNING: This will permanently delete the entire conversation for channel '{channel_display}'"
-            )
-            print(
-                f"This includes {message_count} messages and the conversation record itself"
-            )
+            print(f"WARNING: This will permanently delete the entire conversation for channel '{channel_display}'")
+            print(f"This includes {message_count} messages and the conversation record itself")
             print(f"To confirm, run: ./scripts/db_query.py clear {channel_id} --confirm")
             return
 
         try:
             # Delete all messages from the channel
-            cursor = conn.execute(
-                "DELETE FROM messages WHERE channel_id = ?", (channel_id,)
-            )
+            cursor = conn.execute("DELETE FROM messages WHERE channel_id = ?", (channel_id,))
             deleted_messages = cursor.rowcount
 
             # Delete the conversation record itself
-            cursor = conn.execute(
-                "DELETE FROM conversations WHERE channel_id = ?", (channel_id,)
-            )
+            cursor = conn.execute("DELETE FROM conversations WHERE channel_id = ?", (channel_id,))
             deleted_conversations = cursor.rowcount
 
             conn.commit()
-            print(
-                f"Successfully deleted entire conversation for channel '{channel_display}'"
-            )
-            print(
-                f"Deleted: {deleted_messages} messages and {deleted_conversations} conversation record"
-            )
+            print(f"Successfully deleted entire conversation for channel '{channel_display}'")
+            print(f"Deleted: {deleted_messages} messages and {deleted_conversations} conversation record")
 
         except Exception as e:
             print(f"Error deleting conversation: {e}")
@@ -229,9 +215,7 @@ def clear_all(confirm=False):
 
         if not confirm:
             print("WARNING: This will permanently delete ALL data from the database!")
-            print(
-                f"This includes {total_messages} messages and {total_conversations} conversations"
-            )
+            print(f"This includes {total_messages} messages and {total_conversations} conversations")
             print("This action CANNOT be undone!")
             print("To confirm, run: ./scripts/db_query.py clearall --confirm")
             return
@@ -247,9 +231,7 @@ def clear_all(confirm=False):
 
             conn.commit()
             print("Successfully deleted ALL data from database")
-            print(
-                f"Deleted: {deleted_messages} messages and {deleted_conversations} conversations"
-            )
+            print(f"Deleted: {deleted_messages} messages and {deleted_conversations} conversations")
             print("Database is now empty")
 
         except Exception as e:
@@ -267,11 +249,7 @@ def custom_query(query):
             cursor = conn.execute(query)
 
             # Get column names
-            columns = (
-                [description[0] for description in cursor.description]
-                if cursor.description
-                else []
-            )
+            columns = [description[0] for description in cursor.description] if cursor.description else []
 
             if columns:
                 print(" | ".join(columns))
@@ -294,27 +272,17 @@ def main():
         print("  ./scripts/db_query.py schema          - Show database schema")
         print("  ./scripts/db_query.py stats           - Show database statistics")
         print("  ./scripts/db_query.py filesize        - Show database file size")
-        print(
-            "  ./scripts/db_query.py recent [N]      - Show N recent messages (default 10)"
-        )
-        print(
-            "  ./scripts/db_query.py channel <id> [N] - Show N messages from channel (default 10)"
-        )
-        print(
-            "  ./scripts/db_query.py clear <id>      - Clear all messages from channel (requires --confirm)"
-        )
-        print(
-            "  ./scripts/db_query.py clearall        - Delete ALL conversations and messages (requires --confirm)"
-        )
+        print("  ./scripts/db_query.py recent [N]      - Show N recent messages (default 10)")
+        print("  ./scripts/db_query.py channel <id> [N] - Show N messages from channel (default 10)")
+        print("  ./scripts/db_query.py clear <id>      - Clear all messages from channel (requires --confirm)")
+        print("  ./scripts/db_query.py clearall        - Delete ALL conversations and messages (requires --confirm)")
         print("  ./scripts/db_query.py query <SQL>     - Execute custom SQL query")
         print("\nExamples:")
         print("  ./scripts/db_query.py recent 20")
         print("  ./scripts/db_query.py channel 1421920063572934678")
         print("  ./scripts/db_query.py clear 1421920063572934678 --confirm")
         print("  ./scripts/db_query.py clearall --confirm")
-        print(
-            '  ./scripts/db_query.py query "SELECT username, COUNT(*) FROM messages GROUP BY username"'
-        )
+        print('  ./scripts/db_query.py query "SELECT username, COUNT(*) FROM messages GROUP BY username"')
         return
 
     command = sys.argv[1].lower()

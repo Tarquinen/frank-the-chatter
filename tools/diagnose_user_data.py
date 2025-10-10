@@ -5,13 +5,14 @@ import sys
 
 import discord
 
-sys.path.append(str(Path(__file__).parent.parent / 'src'))
+sys.path.append(str(Path(__file__).parent.parent / "src"))
 import json
 
 from utils.config import Config
 from utils.logger import setup_logger
 
 logger = setup_logger()
+
 
 class DiagnosticBot(discord.Client):
     def __init__(self):
@@ -26,8 +27,8 @@ class DiagnosticBot(discord.Client):
             if isinstance(msg, bytes):
                 return
             data = json.loads(msg)
-            if data.get('t') == 'MESSAGE_CREATE':
-                author = data.get('d', {}).get('author', {})
+            if data.get("t") == "MESSAGE_CREATE":
+                author = data.get("d", {}).get("author", {})
                 logger.info("\n=== RAW MESSAGE_CREATE AUTHOR DATA ===")
                 logger.info(json.dumps(author, indent=2))
                 logger.info(f"\nKeys available: {list(author.keys())}")
@@ -53,10 +54,11 @@ class DiagnosticBot(discord.Client):
         )
         logger.info(f"dir(message.author): {[a for a in dir(message.author) if 'global' in a.lower()]}")
         try:
-            gn = getattr(message.author, 'global_name', 'ATTRIBUTE_NOT_FOUND')
+            gn = getattr(message.author, "global_name", "ATTRIBUTE_NOT_FOUND")
             logger.info(f"getattr global_name: {gn}")
         except Exception as e:
             logger.info(f"Error getting global_name: {e}")
+
 
 if __name__ == "__main__":
     Config.validate()
