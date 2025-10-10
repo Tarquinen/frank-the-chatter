@@ -160,19 +160,28 @@ class FrankBot(discord.Client):
 
 
 def main():
-    """Main entry point"""
+    """Main entry point with auto-reconnect"""
     logger.info("Starting Frank the Chatter bot...")
 
     if not Config.DISCORD_TOKEN:
         logger.error("DISCORD_TOKEN not found in environment")
         return
 
-    try:
-        bot = FrankBot()
-        bot.run(Config.DISCORD_TOKEN)
-    except Exception as e:
-        logger.error(f"Failed to start bot: {e}")
-        raise
+    reconnect_delay = 5
+
+    while True:
+        try:
+            bot = FrankBot()
+            bot.run(Config.DISCORD_TOKEN, reconnect=True)
+        except KeyboardInterrupt:
+            logger.info("Bot shutdown requested by user")
+            break
+        except Exception as e:
+            logger.error(f"Bot crashed: {e}")
+            logger.info(f"Attempting to reconnect in {reconnect_delay} seconds...")
+            import time
+            time.sleep(reconnect_delay)
+            reconnect_delay = min(reconnect_delay * 2, 300)
 
 
 if __name__ == "__main__":
