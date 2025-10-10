@@ -1,4 +1,5 @@
 import re
+
 import discord
 
 from utils.config import PROMPT_DIR, Config
@@ -113,6 +114,8 @@ class RandomReply:
                 enable_tools=False,
                 temperature=1.0,
             )
+
+            logger.info(f"AI Response:\n{ai_response}")
 
             return ai_response
 

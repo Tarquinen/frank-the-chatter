@@ -51,6 +51,18 @@ class MessageStorage:
                     }
                 )
 
+        # Check if message mentions or replies to the bot
+        bot_user_id = str(Config.BOT_USER_ID)
+        interacts_with_bot = any(str(user.id) == bot_user_id for user in message.mentions)
+
+        if (
+            not interacts_with_bot
+            and message.reference
+            and message.reference.resolved
+            and isinstance(message.reference.resolved, discord.Message)
+        ):
+            interacts_with_bot = str(message.reference.resolved.author.id) == bot_user_id
+
         try:
             message_id = self.db.store_message(
                 channel_id=channel_id,
@@ -60,6 +72,7 @@ class MessageStorage:
                 content=content,
                 timestamp=timestamp,
                 attachments=attachments if attachments else None,
+                interacts_with_bot=interacts_with_bot,
             )
 
             logger.debug(f"Stored message {discord_message_id} from {username} in channel {channel_id}")

@@ -41,7 +41,8 @@ class MessageDatabase:
                     timestamp DATETIME NOT NULL,
                     has_attachments BOOLEAN DEFAULT FALSE,
                     media_files TEXT,  -- JSON array of file info
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    interacts_with_bot BOOLEAN DEFAULT FALSE
                 )
             """)
 
@@ -60,6 +61,12 @@ class MessageDatabase:
             conn.execute("CREATE INDEX IF NOT EXISTS idx_channel_timestamp ON messages(channel_id, timestamp DESC)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_discord_message_id ON messages(discord_message_id)")
 
+            # Add new column to existing tables if it doesn't exist
+            cursor = conn.execute("PRAGMA table_info(messages)")
+            columns = [row[1] for row in cursor.fetchall()]
+            if "interacts_with_bot" not in columns:
+                conn.execute("ALTER TABLE messages ADD COLUMN interacts_with_bot BOOLEAN DEFAULT FALSE")
+
             conn.commit()
 
     def store_message(
@@ -71,6 +78,7 @@ class MessageDatabase:
         content: str,
         timestamp: datetime,
         attachments: list[dict] | None = None,
+        interacts_with_bot: bool = False,
     ) -> int:
         """
         Store a Discord message in the database
@@ -83,6 +91,7 @@ class MessageDatabase:
             content: Message text content
             timestamp: When message was sent
             attachments: List of attachment info dicts
+            interacts_with_bot: Whether message mentions or replies to the bot
 
         Returns:
             Message ID from database
@@ -95,8 +104,8 @@ class MessageDatabase:
                 """
                 INSERT INTO messages
                 (channel_id, discord_message_id, user_id, username, content,
-                 timestamp, has_attachments, media_files)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                 timestamp, has_attachments, media_files, interacts_with_bot)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 (
                     channel_id,
@@ -107,6 +116,7 @@ class MessageDatabase:
                     timestamp,
                     has_attachments,
                     media_files_json,
+                    interacts_with_bot,
                 ),
             )
 
@@ -427,6 +437,7 @@ class MessageDatabase:
     def get_random_user(self, exclude_user_ids: list[str]) -> dict[str, Any] | None:
         """
         Get a random user from the database who has messages
+        Only considers messages that don't mention or reply to the bot
 
         Args:
             exclude_user_ids: List of user IDs to exclude (bot, dan, etc.)
@@ -444,6 +455,7 @@ class MessageDatabase:
                 WHERE user_id NOT IN ({placeholders})
                   AND content IS NOT NULL
                   AND TRIM(content) != ''
+                  AND interacts_with_bot = 0
                 GROUP BY user_id, channel_id
                 HAVING COUNT(*) >= 5
                 ORDER BY RANDOM()
@@ -460,6 +472,7 @@ class MessageDatabase:
     ) -> list[dict[str, Any]]:
         """
         Get recent messages from a specific user in a channel, including discord_message_id
+        Excludes messages that mention or reply to the bot
 
         Args:
             user_id: Discord user ID
@@ -478,6 +491,7 @@ class MessageDatabase:
                 WHERE user_id = ? AND channel_id = ?
                   AND content IS NOT NULL
                   AND TRIM(content) != ''
+                  AND interacts_with_bot = 0
                 ORDER BY timestamp DESC
                 LIMIT ?
             """,

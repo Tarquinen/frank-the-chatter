@@ -45,7 +45,7 @@ class CommandsCommand:
             },
             {
                 "name": "!random_reply",
-                "description": "Manually trigger Frank to pick a random user and reply to their most interesting message",
+                "description": "Manually trigger Frank to reply to a random user's interesting message",
                 "permission": "dan only",
             },
         ]
