@@ -9,8 +9,8 @@ Summary guidelines:
 - Use bullet points
 
 Format:
-- 1-2 sentence overview
-- 3-5 bullet points max covering main topics
-- Keep total summary under 150 words
+- 1 sentence overview
+- 5 bullet points max covering main topics
+- Keep total summary under 200 words
 
 Remember: This is a summary, not a continuation of the conversation. Your job is to compress and clarify, not to add new thoughts or engage with the content.
