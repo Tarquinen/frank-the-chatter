@@ -77,7 +77,8 @@ class PersonalityCommand:
         if ai_response:
             return f"{ai_response}{formatted_points}"
         else:
-            return f"I have data on {target_user.display_name}, but I can't seem to summarize it right now.{formatted_points}"
+            fallback = f"I have data on {target_user.display_name}, but I can't seem to summarize it right now."
+            return f"{fallback}{formatted_points}"
 
     def _get_personality_prompt(self):
         prompt_path = PROMPT_DIR / "personality_command.txt"
