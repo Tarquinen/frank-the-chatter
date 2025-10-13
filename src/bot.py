@@ -244,7 +244,7 @@ class FrankBot(discord.Client):
 
     async def _random_react_scheduler(self):
         """Background task that executes random reacts four times per day (5-7 hour intervals)"""
-        await self._scheduled_task("random react", self.random_react.execute_random_react, 5, 7)
+        await self._scheduled_task("random react", self.random_react.execute_random_react, 1, 2)
 
 
 def main():
