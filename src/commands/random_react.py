@@ -59,6 +59,8 @@ class RandomReact:
                 logger.error("AI failed to generate a response")
                 return
 
+            logger.info(f"AI response: {ai_response}")
+
             target_message_id, emoji = self._parse_ai_response(ai_response)
 
             if not target_message_id or not emoji:
