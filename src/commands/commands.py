@@ -48,16 +48,6 @@ class CommandsCommand:
                 "description": "Wipe Frank's memory clean (careful with this one)",
                 "permission": "dan only",
             },
-            {
-                "name": "!random_reply",
-                "description": "Manually trigger Frank to reply to a random user's interesting message",
-                "permission": "dan only",
-            },
-            {
-                "name": "!random_react",
-                "description": "Manually trigger Frank to react with an emoji to a random message",
-                "permission": "dan only",
-            },
         ]
 
         response_lines = []
