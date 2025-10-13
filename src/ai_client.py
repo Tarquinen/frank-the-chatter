@@ -101,14 +101,8 @@ class AIClient:
             response = await self._generate_conversation_response(formatted_context, image_urls)
 
             if response:
-                logger.info(f"Full AI response ({len(response)} chars):\n{response}")
                 clean_response, personality_changes = self._parse_personality_changes(response)
                 logger.info(f"Generated AI response for {mentioned_by} ({len(clean_response)} characters)")
-                if personality_changes:
-                    if personality_changes.get("updates"):
-                        logger.info(f"Extracted {len(personality_changes['updates'])} personality updates")
-                    if personality_changes.get("deletions"):
-                        logger.info(f"Extracted {len(personality_changes['deletions'])} personality deletions")
                 return clean_response, personality_changes
             else:
                 logger.warning("AI generated empty response")
@@ -165,7 +159,6 @@ class AIClient:
         context_parts.append(f"\nPlease respond as Frank to {mentioned_by}.")
 
         formatted_context = "\n".join(context_parts)
-        logger.info(f"Full AI context ({len(formatted_context)} chars):\n{formatted_context}")
 
         return formatted_context, image_urls
 
