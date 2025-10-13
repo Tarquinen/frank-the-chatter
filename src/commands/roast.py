@@ -1,6 +1,6 @@
 import discord
 
-from utils.config import Config
+from utils.config import PROMPT_DIR, Config
 from utils.constants import MAX_MESSAGE_CONTEXT_FOR_AI
 from utils.logger import setup_logger
 
@@ -78,8 +78,7 @@ class RoastCommand:
         try:
             if not self.ai_client.is_available():
                 return (
-                    "My AI is unavailable right now, but I'm sure "
-                    f"{target_user.display_name} deserves a good roasting."
+                    f"My AI is unavailable right now, but I'm sure {target_user.display_name} deserves a good roasting."
                 )
 
             roast_prompt = self._get_roast_prompt(target_user)
@@ -121,13 +120,12 @@ class RoastCommand:
     def _get_roast_prompt(self, target_user):
         try:
             if target_user.id == Config.DAN_USER_ID:
-                prompt_file = "/home/tarquin/src/frank-the-chatter/prompts/roast_dan.txt"
+                prompt_path = PROMPT_DIR / "roast_dan.txt"
             else:
-                prompt_file = "/home/tarquin/src/frank-the-chatter/prompts/roast.txt"
+                prompt_path = PROMPT_DIR / "roast.txt"
 
-            with open(prompt_file) as f:
-                prompt = f.read()
-                return prompt.replace("{username}", target_user.display_name)
+            prompt = prompt_path.read_text().strip()
+            return prompt.replace("{username}", target_user.display_name)
         except Exception as e:
             logger.error(f"Error loading roast prompt: {e}")
             return (

@@ -45,7 +45,9 @@ class FrankBot(discord.Client):
         else:
             self.personality_manager = None
 
-        self.command_handler = CommandHandler(self.message_storage, self.ai_client)
+        self.command_handler = CommandHandler(
+            self.message_storage, self.ai_client, personality_manager=self.personality_manager
+        )
         logger.info("Command handler initialized")
 
         self.random_reply_task = None

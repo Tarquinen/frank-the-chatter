@@ -39,6 +39,11 @@ class CommandsCommand:
                 "permission": "everyone",
             },
             {
+                "name": "!personality [@user]",
+                "description": "Frank shares what he knows about your personality (or someone else's)",
+                "permission": "everyone",
+            },
+            {
                 "name": "!lobotomize [count|all]",
                 "description": "Wipe Frank's memory clean (careful with this one)",
                 "permission": "dan only",

@@ -18,10 +18,11 @@ logger = setup_logger(__name__)
 class CommandHandler:
     """Handles bot commands that bypass AI responses"""
 
-    def __init__(self, message_storage, ai_client, bot=None):
+    def __init__(self, message_storage, ai_client, bot=None, personality_manager=None):
         self.message_storage = message_storage
         self.ai_client = ai_client
         self.bot = bot
+        self.personality_manager = personality_manager
         self.commands = {
             "lobotomize": LobotomizeCommand(message_storage),
             "commands": CommandsCommand(),
@@ -29,6 +30,10 @@ class CommandHandler:
             "bh": BeHelpfulCommand(message_storage, ai_client),
             "roast": RoastCommand(message_storage, ai_client),
         }
+        if personality_manager:
+            from .personality import PersonalityCommand  # type: ignore
+
+            self.commands["personality"] = PersonalityCommand(personality_manager, ai_client)  # type: ignore
 
     def set_bot(self, bot):
         """Set bot reference after initialization for commands that need it"""
@@ -86,6 +91,9 @@ class CommandHandler:
             return {"response": await command.execute(message)}
 
         if command_name == "roast":
+            return {"response": await command.execute(message, args)}
+
+        if command_name == "personality":
             return {"response": await command.execute(message, args)}
 
         if command_name == "random_reply":
