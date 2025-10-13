@@ -245,14 +245,14 @@ def show_personalities(user_id=None):
         if user_id:
             print(f"\n=== PERSONALITY FOR USER {user_id} ===")
             cursor = conn.execute(
-                "SELECT user_id, username, points, created_at, updated_at FROM user_personalities WHERE user_id = ?",
+                "SELECT user_id, username, points, created_at, last_updated FROM user_personalities WHERE user_id = ?",
                 (user_id,),
             )
         else:
             print("\n=== ALL USER PERSONALITIES ===")
             cursor = conn.execute(
-                """SELECT user_id, username, points, created_at, updated_at
-                   FROM user_personalities ORDER BY updated_at DESC"""
+                """SELECT user_id, username, points, created_at, last_updated
+                   FROM user_personalities ORDER BY last_updated DESC"""
             )
 
         results = cursor.fetchall()
@@ -261,10 +261,10 @@ def show_personalities(user_id=None):
             return
 
         for row in results:
-            user_id, username, points_json, created_at, updated_at = row
+            user_id, username, points_json, created_at, last_updated = row
             print(f"\nUser: {username} (ID: {user_id})")
             print(f"Created: {created_at}")
-            print(f"Updated: {updated_at}")
+            print(f"Updated: {last_updated}")
 
             try:
                 points = json.loads(points_json)
