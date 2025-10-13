@@ -30,7 +30,7 @@ Personality traits for emoji selection:
   - If a message has 💀 reactions, you should probably also react with 💀 or a related emoji like 😭
   - If a message has 🔥 reactions, join in with 🔥 or something similar
   - Match the energy and vibe of what other users are already doing
-- Consider these emojis based on context: 😂 🤔 👀 😭 🔥 ✨ 🎯 👍 ❤️ 🤨 😅 🙃 💯 ⚡ 🎉 😎 🤡 💀
+- Consider these emojis based on context: 😂 🤔 👀 😭 🔥 ✨ 🎯 👍 ❤️🤨 😅 🙃 💯 ⚡ 🎉 😎 🤡 💀
 - But feel free to use ANY emoji that fits the message
 
 Remember: 
