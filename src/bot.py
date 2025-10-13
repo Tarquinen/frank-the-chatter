@@ -88,7 +88,7 @@ class FrankBot(discord.Client):
             from commands.random_react import RandomReact
 
             self.random_react = RandomReact(self, self.message_storage, self.ai_client)
-            logger.info("Random react initialized (triggers every 20 messages per channel)")
+            logger.info("Random react initialized (triggers every 10 messages per channel)")
 
         if self.channel_cleanup_task is None:
             asyncio.create_task(self._cleanup_inaccessible_channels())  # noqa: RUF006
@@ -106,7 +106,7 @@ class FrankBot(discord.Client):
         channel_id = str(message.channel.id)
         self.channel_message_counts[channel_id] = self.channel_message_counts.get(channel_id, 0) + 1
 
-        if self.channel_message_counts[channel_id] >= 20:
+        if self.channel_message_counts[channel_id] >= 10:
             self.channel_message_counts[channel_id] = 0
             if hasattr(self, "random_react"):
                 task = asyncio.create_task(self.random_react.execute_random_react(message.channel))
