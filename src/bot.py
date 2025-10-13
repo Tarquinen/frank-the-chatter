@@ -124,6 +124,24 @@ class FrankBot(discord.Client):
                 if command_result:
                     sent_message = await message.channel.send(command_result["response"])
 
+                    if "personality_changes" in command_result and self.personality_manager:
+                        personality_changes = command_result["personality_changes"]
+                        if personality_changes:
+                            user_id = str(message.author.id)
+                            username = message.author.display_name
+                            updates = personality_changes.get("updates", [])
+                            deletions = personality_changes.get("deletions", [])
+
+                            self.personality_manager.update_user_personality(user_id, username, updates, deletions)
+
+                            log_parts = []
+                            if updates:
+                                log_parts.append(f"added {len(updates)} new points")
+                            if deletions:
+                                log_parts.append(f"deleted {len(deletions)} points")
+                            if log_parts:
+                                logger.info(f"Updated personality for {username}: {', '.join(log_parts)}")
+
                     if "execute_after_send" in command_result:
                         await command_result["execute_after_send"](message, sent_message)
 

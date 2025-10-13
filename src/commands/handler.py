@@ -27,7 +27,7 @@ class CommandHandler:
             "lobotomize": LobotomizeCommand(message_storage),
             "commands": CommandsCommand(),
             "summarize": SummarizeCommand(message_storage, ai_client),
-            "bh": BeHelpfulCommand(message_storage, ai_client),
+            "bh": BeHelpfulCommand(message_storage, ai_client, personality_manager),
             "roast": RoastCommand(message_storage, ai_client),
         }
         if personality_manager:
@@ -88,7 +88,11 @@ class CommandHandler:
             return {"response": await command.execute(message, args)}
 
         if command_name == "bh":
-            return {"response": await command.execute(message)}
+            result = await command.execute(message)
+            if isinstance(result, dict):
+                return result
+            else:
+                return {"response": result}
 
         if command_name == "roast":
             return {"response": await command.execute(message, args)}
