@@ -71,7 +71,7 @@ class AIClient:
         context_messages: list[dict],
         mentioned_by: str,
         user_personality: dict[str, Any] | None = None,
-    ) -> tuple[str | None, list[dict[str, str]] | None]:
+    ) -> tuple[str | None, dict[str, Any] | None]:
         """
         Generate an AI response based on conversation context
 
@@ -81,8 +81,8 @@ class AIClient:
             user_personality: Optional personality data for the user
 
         Returns:
-            Tuple of (response_text, personality_updates) or (None, None) if AI is unavailable
-            personality_updates is a list of new personality points or None
+            Tuple of (response_text, personality_changes) or (None, None) if AI is unavailable
+            personality_changes is a dict with 'updates' and 'deletions' lists or None
         """
         if not self.client:
             logger.warning("AI client not available - returning fallback response")
@@ -102,11 +102,14 @@ class AIClient:
 
             if response:
                 logger.info(f"Full AI response ({len(response)} chars):\n{response}")
-                clean_response, personality_updates = self._parse_personality_updates(response)
+                clean_response, personality_changes = self._parse_personality_changes(response)
                 logger.info(f"Generated AI response for {mentioned_by} ({len(clean_response)} characters)")
-                if personality_updates:
-                    logger.info(f"Extracted {len(personality_updates)} personality updates")
-                return clean_response, personality_updates
+                if personality_changes:
+                    if personality_changes.get("updates"):
+                        logger.info(f"Extracted {len(personality_changes['updates'])} personality updates")
+                    if personality_changes.get("deletions"):
+                        logger.info(f"Extracted {len(personality_changes['deletions'])} personality deletions")
+                return clean_response, personality_changes
             else:
                 logger.warning("AI generated empty response")
                 return (
@@ -370,24 +373,26 @@ class AIClient:
             temperature=1.0,
         )
 
-    def _parse_personality_updates(self, response_text: str) -> tuple[str, list[dict[str, str]] | None]:
+    def _parse_personality_changes(self, response_text: str) -> tuple[str, dict[str, Any] | None]:
         """
-        Extract personality updates from AI response
+        Extract personality updates and deletions from AI response
 
         Args:
             response_text: Full response from AI
 
         Returns:
-            Tuple of (clean_response_without_updates, list_of_personality_updates)
+            Tuple of (clean_response, dict with 'updates' and 'deletions' lists or None)
         """
-        pattern = r"\[PERSONALITY_UPDATE\](.*?)\[/PERSONALITY_UPDATE\]"
-        matches = re.findall(pattern, response_text, re.DOTALL)
+        from datetime import datetime
 
-        if not matches:
-            return response_text, None
+        update_pattern = r"\[PERSONALITY_UPDATE\](.*?)\[/PERSONALITY_UPDATE\]"
+        delete_pattern = r"\[PERSONALITY_DELETE\](.*?)\[/PERSONALITY_DELETE\]"
+
+        update_matches = re.findall(update_pattern, response_text, re.DOTALL)
+        delete_matches = re.findall(delete_pattern, response_text, re.DOTALL)
 
         personality_updates = []
-        for match in matches:
+        for match in update_matches:
             lines = match.strip().split("\n")
             update = {}
             for line in lines:
@@ -400,16 +405,35 @@ class AIClient:
                     update["source"] = line.split(":", 1)[1].strip()
 
             if "content" in update and "importance" in update:
-                from datetime import datetime
-
                 update["added_at"] = datetime.now().isoformat()
                 if "source" not in update:
                     update["source"] = "Conversation context"
                 personality_updates.append(update)
 
-        clean_response = re.sub(pattern, "", response_text, flags=re.DOTALL).strip()
+        personality_deletions = []
+        for match in delete_matches:
+            lines = match.strip().split("\n")
+            deletion = {}
+            for line in lines:
+                line = line.strip()
+                if line.startswith("- content:"):
+                    deletion["content"] = line.split(":", 1)[1].strip()
+                elif line.startswith("- reason:"):
+                    deletion["reason"] = line.split(":", 1)[1].strip()
 
-        return clean_response, personality_updates if personality_updates else None
+            if "content" in deletion:
+                personality_deletions.append(deletion)
+
+        clean_response = re.sub(update_pattern, "", response_text, flags=re.DOTALL)
+        clean_response = re.sub(delete_pattern, "", clean_response, flags=re.DOTALL).strip()
+
+        if personality_updates or personality_deletions:
+            return clean_response, {
+                "updates": personality_updates if personality_updates else [],
+                "deletions": personality_deletions if personality_deletions else [],
+            }
+
+        return clean_response, None
 
     def _sync_generate_content(self, content, config: types.GenerateContentConfig):
         """Synchronous wrapper for Gemini API call"""

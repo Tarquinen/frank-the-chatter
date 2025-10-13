@@ -141,17 +141,27 @@ class FrankBot(discord.Client):
                     logger.info(f"Loaded personality for {message.author.display_name}: {point_count} points")
 
             try:
-                ai_response, personality_updates = await self.ai_client.generate_response(
+                ai_response, personality_changes = await self.ai_client.generate_response(
                     context_messages=recent_messages,
                     mentioned_by=message.author.display_name,
                     user_personality=user_personality,
                 )
 
-                if self.personality_manager and personality_updates:
+                if self.personality_manager and personality_changes:
                     user_id = str(message.author.id)
                     username = message.author.display_name
-                    self.personality_manager.update_user_personality(user_id, username, personality_updates)
-                    logger.info(f"Updated personality for {username}: added {len(personality_updates)} new points")
+                    updates = personality_changes.get("updates", [])
+                    deletions = personality_changes.get("deletions", [])
+
+                    self.personality_manager.update_user_personality(user_id, username, updates, deletions)
+
+                    log_parts = []
+                    if updates:
+                        log_parts.append(f"added {len(updates)} new points")
+                    if deletions:
+                        log_parts.append(f"deleted {len(deletions)} points")
+                    if log_parts:
+                        logger.info(f"Updated personality for {username}: {', '.join(log_parts)}")
 
                 if ai_response:
                     await message.channel.send(ai_response)

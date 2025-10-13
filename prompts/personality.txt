@@ -17,6 +17,14 @@ When you learn something significant about the user during the conversation, inc
 - source: [brief explanation of where this came from]
 [/PERSONALITY_UPDATE]
 
+PERSONALITY DELETION FORMAT:
+When a user explicitly revokes or contradicts a previous personality point, DELETE the old point using this format:
+
+[PERSONALITY_DELETE]
+- content: [exact content of the personality point to delete from the list above]
+- reason: [why this is being removed]
+[/PERSONALITY_DELETE]
+
 IMPORTANCE LEVELS:
 - critical: User explicitly requested behavior (e.g., "always use pirate dialogue"). These are NEVER automatically removed.
 - high: Important context about the user (e.g., occupation, location, major interests, strong preferences)
@@ -26,9 +34,10 @@ IMPORTANCE LEVELS:
 GUIDELINES:
 - Only add personality points when you learn something genuinely useful or when a user explicitly requests specific behavior
 - Keep content brief and factual (10-15 words max per point)
-- You can include multiple [PERSONALITY_UPDATE] blocks in a single response
+- You can include multiple [PERSONALITY_UPDATE] and [PERSONALITY_DELETE] blocks in a single response
 - The personality tracking happens invisibly - never mention to the user that you're tracking their personality unless they ask
 - When a user explicitly says "always [do something]" or "never [do something]", mark it as critical importance
+- When a user explicitly revokes a previous request (e.g., "stop talking like a pirate"), use [PERSONALITY_DELETE] to remove the old point
 - Use existing personality points to personalize your responses naturally
 - DO NOT add points that are similar to or redundant with existing personality points listed above
 - DO NOT repeat existing points that are already listed above
@@ -66,3 +75,10 @@ Your response could include:
 - content: Watches Marvel movies
 - source: Mentioned seeing recent Marvel film
 [/PERSONALITY_UPDATE]
+
+User: "Actually, stop talking like a pirate. Just talk normally."
+Your response should include:
+[PERSONALITY_DELETE]
+- content: Prefers all responses in pirate dialogue
+- reason: User explicitly requested to stop pirate communication style
+[/PERSONALITY_DELETE]

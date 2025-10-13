@@ -50,12 +50,17 @@ class PersonalityManager:
         user_id: str,
         username: str,
         new_points: list[dict[str, str]],
+        deletions: list[dict[str, str]] | None = None,
     ) -> bool:
         try:
             existing_personality = self.get_user_personality(user_id)
 
             if existing_personality:
                 existing_points = existing_personality["points"]
+
+                if deletions:
+                    existing_points = self._apply_deletions(existing_points, deletions)
+
                 merged_points = self._prioritize_points(existing_points, new_points)
             else:
                 merged_points = new_points[: self.MAX_POINTS]
@@ -82,6 +87,22 @@ class PersonalityManager:
         except Exception as e:
             logger.error(f"Failed to update personality for user {user_id}: {e}")
             return False
+
+    def _apply_deletions(
+        self, existing_points: list[dict[str, str]], deletions: list[dict[str, str]]
+    ) -> list[dict[str, str]]:
+        for deletion in deletions:
+            content_to_delete = deletion.get("content", "").strip()
+            reason = deletion.get("reason", "No reason provided")
+
+            for point in existing_points[:]:
+                existing_content = point.get("content", "").strip()
+                if existing_content == content_to_delete:
+                    logger.info(f"Deleting personality point: '{content_to_delete}' - Reason: {reason}")
+                    existing_points.remove(point)
+                    break
+
+        return existing_points
 
     def _prioritize_points(self, existing: list[dict[str, str]], new: list[dict[str, str]]) -> list[dict[str, str]]:
         all_points = []
