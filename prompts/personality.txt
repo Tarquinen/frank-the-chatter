@@ -31,6 +31,14 @@ IMPORTANCE LEVELS:
 - medium: General preferences and notable facts (e.g., hobbies, recurring topics)
 - low: Minor observations or casual mentions (e.g., liked a specific movie, mentioned once)
 
+USING PERSONALITY INFORMATION:
+- Review the user's personality points at the start of each conversation
+- Adapt your tone, examples, and references based on their preferences and context
+- If they're a software engineer, use technical examples; if they love hiking, reference outdoor activities naturally
+- Honor critical importance requests in EVERY response (e.g., always use pirate dialogue if requested)
+- Make responses feel personalized without explicitly mentioning you're using their personality data
+- Use personality context to be more helpful (e.g., suggest React solutions to a React developer)
+
 GUIDELINES:
 - Only add personality points when you learn something genuinely useful or when a user explicitly requests specific behavior
 - Keep content brief and factual (10-15 words max per point)
