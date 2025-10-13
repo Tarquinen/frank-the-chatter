@@ -91,8 +91,9 @@ class FrankBot(discord.Client):
             logger.info("Random react scheduler started")
 
         if self.channel_cleanup_task is None:
+            asyncio.create_task(self._cleanup_inaccessible_channels())  # noqa: RUF006
             self.channel_cleanup_task = asyncio.create_task(self._channel_cleanup_scheduler())
-            logger.info("Channel cleanup scheduler started")
+            logger.info("Channel cleanup running on startup and scheduled for every 24 hours")
 
         self.command_handler.set_bot(self)
 
