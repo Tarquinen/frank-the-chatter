@@ -144,6 +144,17 @@ class RandomReact:
         match = re.match(r"REACT_TO:\s*(\d+)\s*\n\s*(.+)", response, re.DOTALL)
         if match:
             message_id = match.group(1).strip()
-            emoji = match.group(2).strip()
+            emoji_line = match.group(2).strip()
+
+            emoji = ""
+            for char in emoji_line:
+                if ord(char) > 127:
+                    emoji += char
+                elif char.isspace():
+                    break
+
+            if not emoji:
+                emoji = emoji_line.split()[0] if emoji_line else ""
+
             return message_id, emoji
         return None, None
