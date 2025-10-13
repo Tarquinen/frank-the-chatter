@@ -19,6 +19,9 @@ MB_PER_GB = 1024
 # AI Context Settings
 MAX_MESSAGE_CONTEXT_FOR_AI = 20
 
+# Random React Settings
+RANDOM_REACT_MESSAGE_COUNT = 10
+
 # AI Generation Settings
 AI_DEFAULT_TEMPERATURE = 1.0
 AI_TOP_P = 0.95

@@ -3,7 +3,7 @@ import re
 import discord
 
 from utils.config import PROMPT_DIR
-from utils.constants import AI_RANDOM_REPLY_MAX_TOKENS
+from utils.constants import AI_RANDOM_REPLY_MAX_TOKENS, RANDOM_REACT_MESSAGE_COUNT
 from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -20,7 +20,7 @@ class RandomReact:
             logger.info(f"Starting random react in channel {channel.id}")
 
             messages = []
-            async for msg in channel.history(limit=20):
+            async for msg in channel.history(limit=RANDOM_REACT_MESSAGE_COUNT):
                 if msg.author != self.bot.user:
                     messages.append(msg)
 
