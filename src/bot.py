@@ -51,6 +51,7 @@ class FrankBot(discord.Client):
         logger.info("Command handler initialized")
 
         self.random_reply_task = None
+        self.random_react_task = None
 
     async def on_ready(self):
         """Called when bot connects successfully"""
@@ -81,6 +82,13 @@ class FrankBot(discord.Client):
             self.command_handler.set_bot(self)
             self.random_reply_task = asyncio.create_task(self._random_reply_scheduler())
             logger.info("Random reply scheduler started")
+
+        if self.random_react_task is None:
+            from commands.random_react import RandomReact
+
+            self.random_react = RandomReact(self, self.message_storage, self.ai_client)
+            self.random_react_task = asyncio.create_task(self._random_react_scheduler())
+            logger.info("Random react scheduler started")
 
     async def on_message(self, message):
         await self._store_message(message)
@@ -199,30 +207,43 @@ class FrankBot(discord.Client):
 
         # Note: Bot's response will be automatically stored when on_message fires for it
 
-    async def _random_reply_scheduler(self):
+    async def _scheduled_task(self, task_name: str, execute_func, min_hours: float, max_hours: float):
         """
-        Background task that executes random replies twice per day
-        Runs at random times roughly 12 hours apart
+        Generic background task scheduler that executes a function at random intervals
+
+        Args:
+            task_name: Name of the task for logging
+            execute_func: Async function to execute
+            min_hours: Minimum hours between executions
+            max_hours: Maximum hours between executions
         """
-        logger.info("Random reply scheduler initialized")
+        logger.info(f"{task_name} scheduler initialized")
 
         while True:
             try:
-                hours_until_next = random.uniform(10, 14)
+                hours_until_next = random.uniform(min_hours, max_hours)
                 seconds_until_next = hours_until_next * 3600
-                logger.info(f"Next random reply scheduled in {hours_until_next:.1f} hours")
+                logger.info(f"Next {task_name} scheduled in {hours_until_next:.1f} hours")
 
                 await asyncio.sleep(seconds_until_next)
 
-                logger.info("Executing scheduled random reply")
-                await self.random_reply.execute_random_reply()
+                logger.info(f"Executing scheduled {task_name}")
+                await execute_func()
 
             except asyncio.CancelledError:
-                logger.info("Random reply scheduler cancelled")
+                logger.info(f"{task_name} scheduler cancelled")
                 break
             except Exception as e:
-                logger.error(f"Error in random reply scheduler: {e}", exc_info=True)
+                logger.error(f"Error in {task_name} scheduler: {e}", exc_info=True)
                 await asyncio.sleep(3600)
+
+    async def _random_reply_scheduler(self):
+        """Background task that executes random replies twice per day (10-14 hour intervals)"""
+        await self._scheduled_task("random reply", self.random_reply.execute_random_reply, 10, 14)
+
+    async def _random_react_scheduler(self):
+        """Background task that executes random reacts four times per day (5-7 hour intervals)"""
+        await self._scheduled_task("random react", self.random_react.execute_random_react, 5, 7)
 
 
 def main():

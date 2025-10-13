@@ -40,6 +40,8 @@ class CommandHandler:
         self.bot = bot
         if hasattr(bot, "random_reply"):
             self.commands["random_reply"] = bot.random_reply
+        if hasattr(bot, "random_react"):
+            self.commands["random_react"] = bot.random_react
 
     def is_authorized(self, user_id: str) -> bool:
         """Check if user is authorized to use commands"""
@@ -101,6 +103,9 @@ class CommandHandler:
             return {"response": await command.execute(message, args)}
 
         if command_name == "random_reply":
+            return {"response": await command.execute(message, args)}
+
+        if command_name == "random_react":
             return {"response": await command.execute(message, args)}
 
         if command_name == "lobotomize":

@@ -53,6 +53,11 @@ class CommandsCommand:
                 "description": "Manually trigger Frank to reply to a random user's interesting message",
                 "permission": "dan only",
             },
+            {
+                "name": "!random_react",
+                "description": "Manually trigger Frank to react with an emoji to a random message",
+                "permission": "dan only",
+            },
         ]
 
         response_lines = []
