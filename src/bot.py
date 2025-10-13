@@ -52,6 +52,7 @@ class FrankBot(discord.Client):
 
         self.random_reply_task = None
         self.random_react_task = None
+        self.channel_cleanup_task = None
 
     async def on_ready(self):
         """Called when bot connects successfully"""
@@ -88,6 +89,10 @@ class FrankBot(discord.Client):
             self.random_react = RandomReact(self, self.message_storage, self.ai_client)
             self.random_react_task = asyncio.create_task(self._random_react_scheduler())
             logger.info("Random react scheduler started")
+
+        if self.channel_cleanup_task is None:
+            self.channel_cleanup_task = asyncio.create_task(self._channel_cleanup_scheduler())
+            logger.info("Channel cleanup scheduler started")
 
         self.command_handler.set_bot(self)
 
@@ -245,6 +250,34 @@ class FrankBot(discord.Client):
     async def _random_react_scheduler(self):
         """Background task that executes random reacts four times per day (5-7 hour intervals)"""
         await self._scheduled_task("random react", self.random_react.execute_random_react, 1, 2)
+
+    async def _channel_cleanup_scheduler(self):
+        """Background task that cleans up inaccessible channels once per day"""
+        await self._scheduled_task("channel cleanup", self._cleanup_inaccessible_channels, 24, 24)
+
+    async def _cleanup_inaccessible_channels(self):
+        """Clean up channels from database that Frank no longer has access to"""
+        try:
+            accessible_channel_ids = []
+
+            for guild in self.guilds:
+                for channel in guild.channels:
+                    accessible_channel_ids.append(str(channel.id))
+
+            for channel in self.private_channels:
+                accessible_channel_ids.append(str(channel.id))
+
+            logger.info(f"Found {len(accessible_channel_ids)} accessible channels across {len(self.guilds)} guilds")
+
+            cleaned_count = self.message_storage.cleanup_inaccessible_channels(accessible_channel_ids)
+
+            if cleaned_count > 0:
+                logger.info(f"Successfully cleaned up {cleaned_count} inaccessible channels")
+            else:
+                logger.info("No inaccessible channels found to clean up")
+
+        except Exception as e:
+            logger.error(f"Error cleaning up inaccessible channels: {e}", exc_info=True)
 
 
 def main():

@@ -269,3 +269,24 @@ class MessageStorage:
             formatted_lines.append(f"[{time_str}] {username}: {content}{media_info}")
 
         return "\n".join(formatted_lines)
+
+    def cleanup_inaccessible_channels(self, accessible_channel_ids: list[str]) -> int:
+        """
+        Remove messages and conversation records for channels not in the accessible list
+
+        Args:
+            accessible_channel_ids: List of channel IDs (as strings) that Frank currently has access to
+
+        Returns:
+            Number of channels cleaned up
+        """
+        try:
+            cleaned_count = self.db.cleanup_inaccessible_channels(accessible_channel_ids)
+            if cleaned_count > 0:
+                logger.info(f"Cleaned up {cleaned_count} inaccessible channels from database")
+            else:
+                logger.debug("No inaccessible channels to clean up")
+            return cleaned_count
+        except Exception as e:
+            logger.error(f"Failed to cleanup inaccessible channels: {e}")
+            return 0

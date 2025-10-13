@@ -536,3 +536,42 @@ class MessageDatabase:
                 messages.append(message)
 
             return list(reversed(messages))
+
+    def cleanup_inaccessible_channels(self, accessible_channel_ids: list[str]) -> int:
+        """
+        Remove messages and conversation records for channels not in the accessible list
+
+        Args:
+            accessible_channel_ids: List of channel IDs that Frank currently has access to
+
+        Returns:
+            Number of channels cleaned up
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            if not accessible_channel_ids:
+                return 0
+
+            placeholders = ",".join("?" * len(accessible_channel_ids))
+
+            cursor = conn.execute(
+                f"""
+                SELECT DISTINCT channel_id
+                FROM conversations
+                WHERE channel_id NOT IN ({placeholders})
+            """,
+                accessible_channel_ids,
+            )
+
+            inaccessible_channels = [row[0] for row in cursor.fetchall()]
+
+            if not inaccessible_channels:
+                return 0
+
+            for channel_id in inaccessible_channels:
+                conn.execute("DELETE FROM messages WHERE channel_id = ?", (channel_id,))
+                conn.execute("DELETE FROM conversations WHERE channel_id = ?", (channel_id,))
+
+            conn.commit()
+
+            print(f"Cleaned up {len(inaccessible_channels)} inaccessible channels from database")
+            return len(inaccessible_channels)

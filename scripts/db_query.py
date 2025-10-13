@@ -281,6 +281,20 @@ def show_personalities(user_id=None):
                 print(f"Raw data: {points_json}")
 
 
+def cleanup_channels():
+    """Clean up channels that no longer exist or are inaccessible by checking Discord"""
+    print("\n=== CHANNEL CLEANUP (DRY RUN) ===")
+    print("This command requires Discord bot connection to determine accessible channels.")
+    print("The bot automatically runs this cleanup once per day.")
+    print("\nTo manually trigger cleanup, you have two options:")
+    print("  1. Wait for the automatic daily cleanup (recommended)")
+    print("  2. Restart the bot to trigger cleanup on next startup")
+    print("\nTo see which channels are in the database:")
+    print("  ./scripts/db_query.py stats")
+    print("\nTo manually delete a specific channel:")
+    print("  ./scripts/db_query.py clear <channel_id> --confirm")
+
+
 def custom_query(query):
     """Execute a custom SQL query"""
     print("\n=== CUSTOM QUERY ===")
@@ -317,6 +331,7 @@ def main():
         print("  ./scripts/db_query.py recent [N]      - Show N recent messages (default 10)")
         print("  ./scripts/db_query.py channel <id> [N] - Show N messages from channel (default 10)")
         print("  ./scripts/db_query.py personality [user_id] - Show personality data for user or all users")
+        print("  ./scripts/db_query.py cleanup         - Info about cleaning up inaccessible channels")
         print("  ./scripts/db_query.py clear <id>      - Clear all messages from channel (requires --confirm)")
         print("  ./scripts/db_query.py clearall        - Delete ALL conversations and messages (requires --confirm)")
         print("  ./scripts/db_query.py query <SQL>     - Execute custom SQL query")
@@ -325,6 +340,7 @@ def main():
         print("  ./scripts/db_query.py channel 1421920063572934678")
         print("  ./scripts/db_query.py personality")
         print("  ./scripts/db_query.py personality 123456789")
+        print("  ./scripts/db_query.py cleanup")
         print("  ./scripts/db_query.py clear 1421920063572934678 --confirm")
         print("  ./scripts/db_query.py clearall --confirm")
         print('  ./scripts/db_query.py query "SELECT username, COUNT(*) FROM messages GROUP BY username"')
@@ -351,6 +367,8 @@ def main():
     elif command == "personality":
         user_id = sys.argv[2] if len(sys.argv) > 2 else None
         show_personalities(user_id)
+    elif command == "cleanup":
+        cleanup_channels()
     elif command == "clear":
         if len(sys.argv) < 3:
             print("Error: Channel ID required")
