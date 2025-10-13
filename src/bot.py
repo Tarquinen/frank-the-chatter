@@ -37,6 +37,14 @@ class FrankBot(discord.Client):
 
         self.ai_client = AIClient()
 
+        if Config.ENABLE_PERSONALITY_FEATURE:
+            from personality_manager import PersonalityManager
+
+            self.personality_manager = PersonalityManager(Config.DATABASE_PATH)
+            logger.info("Personality manager initialized")
+        else:
+            self.personality_manager = None
+
         self.command_handler = CommandHandler(self.message_storage, self.ai_client)
         logger.info("Command handler initialized")
 
@@ -123,17 +131,31 @@ class FrankBot(discord.Client):
 
             logger.info(f"Bot mentioned in {getattr(message.channel, 'name', 'DM')} by {message.author.display_name}")
             logger.info(f"Available context: {len(recent_messages)} messages from database")
-            # Generate AI response
+
+            user_personality = None
+            if self.personality_manager:
+                user_id = str(message.author.id)
+                user_personality = self.personality_manager.get_user_personality(user_id)
+                if user_personality:
+                    point_count = len(user_personality.get("points", []))
+                    logger.info(f"Loaded personality for {message.author.display_name}: {point_count} points")
+
             try:
-                ai_response = await self.ai_client.generate_response(
+                ai_response, personality_updates = await self.ai_client.generate_response(
                     context_messages=recent_messages,
                     mentioned_by=message.author.display_name,
+                    user_personality=user_personality,
                 )
+
+                if self.personality_manager and personality_updates:
+                    user_id = str(message.author.id)
+                    username = message.author.display_name
+                    self.personality_manager.update_user_personality(user_id, username, personality_updates)
+                    logger.info(f"Updated personality for {username}: added {len(personality_updates)} new points")
 
                 if ai_response:
                     await message.channel.send(ai_response)
                 else:
-                    # Fallback response if AI fails
                     await message.channel.send(
                         f"Hi {message.author.mention}! I heard you mention me. "
                         f"I have {len(recent_messages)} messages of context stored. "

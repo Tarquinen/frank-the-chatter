@@ -104,9 +104,6 @@ class RandomReply:
 
             formatted_context = "\n".join(context_parts)
 
-            logger.info(f"AI System Prompt:\n{prompt}")
-            logger.info(f"AI Context:\n{formatted_context}")
-
             ai_response = await self.ai_client._generate_with_config(
                 formatted_context=formatted_context,
                 system_prompt=prompt,
@@ -115,8 +112,6 @@ class RandomReply:
                 temperature=1.0,
                 max_tokens=AI_RANDOM_REPLY_MAX_TOKENS,
             )
-
-            logger.info(f"AI Response:\n{ai_response}")
 
             return ai_response
 

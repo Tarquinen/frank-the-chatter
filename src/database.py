@@ -57,9 +57,22 @@ class MessageDatabase:
                 )
             """)
 
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS user_personalities (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id TEXT NOT NULL,
+                    username TEXT NOT NULL,
+                    points TEXT NOT NULL,
+                    last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(user_id)
+                )
+            """)
+
             # Create indexes for fast queries
             conn.execute("CREATE INDEX IF NOT EXISTS idx_channel_timestamp ON messages(channel_id, timestamp DESC)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_discord_message_id ON messages(discord_message_id)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_user_personalities_user_id ON user_personalities(user_id)")
 
             # Add new column to existing tables if it doesn't exist
             cursor = conn.execute("PRAGMA table_info(messages)")

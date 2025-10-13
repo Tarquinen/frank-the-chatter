@@ -239,6 +239,48 @@ def clear_all(confirm=False):
             conn.rollback()
 
 
+def show_personalities(user_id=None):
+    """Show personality data for all users or a specific user"""
+    with connect_db() as conn:
+        if user_id:
+            print(f"\n=== PERSONALITY FOR USER {user_id} ===")
+            cursor = conn.execute(
+                "SELECT user_id, username, points, created_at, updated_at FROM user_personalities WHERE user_id = ?",
+                (user_id,),
+            )
+        else:
+            print("\n=== ALL USER PERSONALITIES ===")
+            cursor = conn.execute(
+                """SELECT user_id, username, points, created_at, updated_at
+                   FROM user_personalities ORDER BY updated_at DESC"""
+            )
+
+        results = cursor.fetchall()
+        if not results:
+            print("No personality data found")
+            return
+
+        for row in results:
+            user_id, username, points_json, created_at, updated_at = row
+            print(f"\nUser: {username} (ID: {user_id})")
+            print(f"Created: {created_at}")
+            print(f"Updated: {updated_at}")
+
+            try:
+                points = json.loads(points_json)
+                if points:
+                    print(f"Points ({len(points)}):")
+                    for point in points:
+                        importance = point.get("importance", "unknown")
+                        content = point.get("content", "")
+                        print(f"  [{importance}] {content}")
+                else:
+                    print("Points: (empty)")
+            except Exception as e:
+                print(f"Error parsing points: {e}")
+                print(f"Raw data: {points_json}")
+
+
 def custom_query(query):
     """Execute a custom SQL query"""
     print("\n=== CUSTOM QUERY ===")
@@ -274,12 +316,15 @@ def main():
         print("  ./scripts/db_query.py filesize        - Show database file size")
         print("  ./scripts/db_query.py recent [N]      - Show N recent messages (default 10)")
         print("  ./scripts/db_query.py channel <id> [N] - Show N messages from channel (default 10)")
+        print("  ./scripts/db_query.py personality [user_id] - Show personality data for user or all users")
         print("  ./scripts/db_query.py clear <id>      - Clear all messages from channel (requires --confirm)")
         print("  ./scripts/db_query.py clearall        - Delete ALL conversations and messages (requires --confirm)")
         print("  ./scripts/db_query.py query <SQL>     - Execute custom SQL query")
         print("\nExamples:")
         print("  ./scripts/db_query.py recent 20")
         print("  ./scripts/db_query.py channel 1421920063572934678")
+        print("  ./scripts/db_query.py personality")
+        print("  ./scripts/db_query.py personality 123456789")
         print("  ./scripts/db_query.py clear 1421920063572934678 --confirm")
         print("  ./scripts/db_query.py clearall --confirm")
         print('  ./scripts/db_query.py query "SELECT username, COUNT(*) FROM messages GROUP BY username"')
@@ -303,6 +348,9 @@ def main():
         channel_id = sys.argv[2]
         limit = int(sys.argv[3]) if len(sys.argv) > 3 else 10
         show_channel_messages(channel_id, limit)
+    elif command == "personality":
+        user_id = sys.argv[2] if len(sys.argv) > 2 else None
+        show_personalities(user_id)
     elif command == "clear":
         if len(sys.argv) < 3:
             print("Error: Channel ID required")

@@ -15,6 +15,7 @@ load_dotenv(PROJECT_ROOT / ".env")
 PROMPT_DIR = PROJECT_ROOT / "prompts"
 CONVERSATION_PROMPT_PATH = PROMPT_DIR / "conversation.txt"
 SUMMARIZE_PROMPT_PATH = PROMPT_DIR / "summarize.txt"
+PERSONALITY_PROMPT_PATH = PROMPT_DIR / "personality.txt"
 
 
 class Config:
@@ -38,6 +39,9 @@ class Config:
     # Logging
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
     DEBUG_MODE = os.getenv("DEBUG_MODE", "false").lower() == "true"
+
+    # Personality Feature
+    ENABLE_PERSONALITY_FEATURE = os.getenv("ENABLE_PERSONALITY_FEATURE", "true").lower() == "true"
 
     @classmethod
     def validate(cls):

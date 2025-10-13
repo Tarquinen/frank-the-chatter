@@ -2,7 +2,9 @@
 
 import asyncio
 from pathlib import Path
+import re
 import tempfile
+from typing import Any
 
 import aiohttp
 import google.genai as genai
@@ -30,6 +32,10 @@ class AIClient:
         """Initialize the AI client with Gemini configuration"""
         self.client = None
         self.system_prompt = self._load_system_prompt()
+        if Config.ENABLE_PERSONALITY_FEATURE:
+            self.personality_prompt = self._load_system_prompt("personality.txt")
+        else:
+            self.personality_prompt = ""
         self._initialize_client()
 
     def _initialize_client(self):
@@ -60,40 +66,61 @@ class AIClient:
             logger.error(f"Failed to load system prompt: {e}")
             return "You are Frank, an AI in a Discord chat."
 
-    async def generate_response(self, context_messages: list[dict], mentioned_by: str) -> str | None:
+    async def generate_response(
+        self,
+        context_messages: list[dict],
+        mentioned_by: str,
+        user_personality: dict[str, Any] | None = None,
+    ) -> tuple[str | None, list[dict[str, str]] | None]:
         """
         Generate an AI response based on conversation context
 
         Args:
             context_messages: List of recent messages from database (including the mention)
             mentioned_by: Username who mentioned the bot
+            user_personality: Optional personality data for the user
 
         Returns:
-            Generated response text or None if AI is unavailable
+            Tuple of (response_text, personality_updates) or (None, None) if AI is unavailable
+            personality_updates is a list of new personality points or None
         """
         if not self.client:
             logger.warning("AI client not available - returning fallback response")
-            return f"Hi {mentioned_by}! My AI is currently unavailable, but I'm still logging our conversation."
+            return (
+                f"Hi {mentioned_by}! My AI is currently unavailable, but I'm still logging our conversation.",
+                None,
+            )
 
         try:
             # Format conversation context for AI
-            formatted_context, image_urls = self._format_context_for_ai(context_messages, mentioned_by)
+            formatted_context, image_urls = self._format_context_for_ai(
+                context_messages, mentioned_by, user_personality
+            )
 
             # Generate response using Gemini
             response = await self._generate_conversation_response(formatted_context, image_urls)
 
             if response:
-                logger.info(f"Generated AI response for {mentioned_by} ({len(response)} characters)")
-                return response
+                logger.info(f"Full AI response ({len(response)} chars):\n{response}")
+                clean_response, personality_updates = self._parse_personality_updates(response)
+                logger.info(f"Generated AI response for {mentioned_by} ({len(clean_response)} characters)")
+                if personality_updates:
+                    logger.info(f"Extracted {len(personality_updates)} personality updates")
+                return clean_response, personality_updates
             else:
                 logger.warning("AI generated empty response")
-                return f"Hi {mentioned_by}! I heard you mention me, but I'm not sure how to respond right now."
+                return (
+                    f"Hi {mentioned_by}! I heard you mention me, but I'm not sure how to respond right now.",
+                    None,
+                )
 
         except Exception as e:
             logger.error(f"Error generating AI response: {e}")
-            return f"Hi {mentioned_by}! I'm having some trouble with my AI right now, but I'm still here!"
+            return f"Hi {mentioned_by}! I'm having some trouble with my AI right now, but I'm still here!", None
 
-    def _format_context_for_ai(self, context_messages: list[dict], mentioned_by: str):
+    def _format_context_for_ai(
+        self, context_messages: list[dict], mentioned_by: str, user_personality: dict[str, Any] | None = None
+    ):
         """Format conversation context for the AI model, extracting image URLs"""
         context_parts = []
         image_urls = []
@@ -122,10 +149,22 @@ class AIClient:
                 if content.strip() or msg.get("has_attachments"):
                     context_parts.append(message_text)
 
+        # Add personality information if available and enabled
+        if Config.ENABLE_PERSONALITY_FEATURE and user_personality:
+            from personality_manager import PersonalityManager
+
+            personality_mgr = PersonalityManager("")
+            personality_text = personality_mgr.format_personality_for_prompt(user_personality)
+            if personality_text:
+                context_parts.append(personality_text)
+
         # Add instruction for response
         context_parts.append(f"\nPlease respond as Frank to {mentioned_by}.")
 
-        return "\n".join(context_parts), image_urls
+        formatted_context = "\n".join(context_parts)
+        logger.info(f"Full AI context ({len(formatted_context)} chars):\n{formatted_context}")
+
+        return formatted_context, image_urls
 
     async def _download_and_upload_image(self, url: str):
         """Download image from URL and upload to Gemini"""
@@ -319,13 +358,58 @@ class AIClient:
         self, formatted_context: str, image_urls: list[str] | None = None
     ) -> str | None:
         """Generate conversational response with tools and image support enabled"""
+        combined_prompt = self.system_prompt
+        if Config.ENABLE_PERSONALITY_FEATURE and self.personality_prompt:
+            combined_prompt = f"{self.system_prompt}\n\n{self.personality_prompt}"
+
         return await self._generate_with_config(
             formatted_context=formatted_context,
-            system_prompt=self.system_prompt,
+            system_prompt=combined_prompt,
             image_urls=image_urls,
             enable_tools=True,
             temperature=1.0,
         )
+
+    def _parse_personality_updates(self, response_text: str) -> tuple[str, list[dict[str, str]] | None]:
+        """
+        Extract personality updates from AI response
+
+        Args:
+            response_text: Full response from AI
+
+        Returns:
+            Tuple of (clean_response_without_updates, list_of_personality_updates)
+        """
+        pattern = r"\[PERSONALITY_UPDATE\](.*?)\[/PERSONALITY_UPDATE\]"
+        matches = re.findall(pattern, response_text, re.DOTALL)
+
+        if not matches:
+            return response_text, None
+
+        personality_updates = []
+        for match in matches:
+            lines = match.strip().split("\n")
+            update = {}
+            for line in lines:
+                line = line.strip()
+                if line.startswith("- importance:"):
+                    update["importance"] = line.split(":", 1)[1].strip()
+                elif line.startswith("- content:"):
+                    update["content"] = line.split(":", 1)[1].strip()
+                elif line.startswith("- source:"):
+                    update["source"] = line.split(":", 1)[1].strip()
+
+            if "content" in update and "importance" in update:
+                from datetime import datetime
+
+                update["added_at"] = datetime.now().isoformat()
+                if "source" not in update:
+                    update["source"] = "Conversation context"
+                personality_updates.append(update)
+
+        clean_response = re.sub(pattern, "", response_text, flags=re.DOTALL).strip()
+
+        return clean_response, personality_updates if personality_updates else None
 
     def _sync_generate_content(self, content, config: types.GenerateContentConfig):
         """Synchronous wrapper for Gemini API call"""
