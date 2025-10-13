@@ -53,6 +53,7 @@ class FrankBot(discord.Client):
         self.random_reply_task = None
         self.random_react_task = None
         self.channel_cleanup_task = None
+        self.channel_message_counts = {}
 
     async def on_ready(self):
         """Called when bot connects successfully"""
@@ -87,8 +88,7 @@ class FrankBot(discord.Client):
             from commands.random_react import RandomReact
 
             self.random_react = RandomReact(self, self.message_storage, self.ai_client)
-            self.random_react_task = asyncio.create_task(self._random_react_scheduler())
-            logger.info("Random react scheduler started")
+            logger.info("Random react initialized (triggers every 20 messages per channel)")
 
         if self.channel_cleanup_task is None:
             asyncio.create_task(self._cleanup_inaccessible_channels())  # noqa: RUF006
@@ -102,6 +102,15 @@ class FrankBot(discord.Client):
 
         if message.author == self.user:
             return
+
+        channel_id = str(message.channel.id)
+        self.channel_message_counts[channel_id] = self.channel_message_counts.get(channel_id, 0) + 1
+
+        if self.channel_message_counts[channel_id] >= 20:
+            self.channel_message_counts[channel_id] = 0
+            if hasattr(self, "random_react"):
+                task = asyncio.create_task(self.random_react.execute_random_react(message.channel))
+                task.add_done_callback(lambda t: t.exception() if not t.cancelled() else None)
 
         if self.user and self.user.mentioned_in(message):
             await self._handle_mention(message)
@@ -247,10 +256,6 @@ class FrankBot(discord.Client):
     async def _random_reply_scheduler(self):
         """Background task that executes random replies twice per day (10-14 hour intervals)"""
         await self._scheduled_task("random reply", self.random_reply.execute_random_reply, 10, 14)
-
-    async def _random_react_scheduler(self):
-        """Background task that executes random reacts four times per day (5-7 hour intervals)"""
-        await self._scheduled_task("random react", self.random_react.execute_random_react, 1, 2)
 
     async def _channel_cleanup_scheduler(self):
         """Background task that cleans up inaccessible channels once per day"""

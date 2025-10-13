@@ -2,8 +2,8 @@ import re
 
 import discord
 
-from utils.config import PROMPT_DIR, Config
-from utils.constants import AI_RANDOM_REPLY_MAX_TOKENS, MAX_MESSAGE_CONTEXT_FOR_AI
+from utils.config import PROMPT_DIR
+from utils.constants import AI_RANDOM_REPLY_MAX_TOKENS
 from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -20,40 +20,28 @@ class RandomReact:
 
     async def execute(self, _message, _args) -> str:
         try:
-            await self.execute_random_react()
+            channel = _message.channel
+            await self.execute_random_react(channel)
             return "Random react triggered successfully! Check the logs for details."
         except Exception as e:
             return f"Error triggering random react: {e}"
 
-    async def execute_random_react(self):
+    async def execute_random_react(self, channel):
         try:
-            logger.info("Starting random react execution")
+            logger.info(f"Starting random react execution in channel {channel.id}")
 
-            random_user = self.message_storage.db.get_random_user(
-                exclude_user_ids=[str(Config.BOT_USER_ID)], include_bot_interactions=True
-            )
-
-            if not random_user:
-                logger.warning("No eligible users found for random react")
-                return
-
-            user_id = random_user["user_id"]
-            username = random_user["username"]
-            channel_id = random_user["channel_id"]
-
-            logger.info(f"Selected user {username} (ID: {user_id}) in channel {channel_id}")
-
-            messages = self.message_storage.db.get_user_messages_with_ids(
-                user_id=user_id, channel_id=channel_id, limit=MAX_MESSAGE_CONTEXT_FOR_AI, include_bot_interactions=True
-            )
+            messages = []
+            async for msg in channel.history(limit=20):
+                if msg.author != self.bot.user:
+                    messages.append(msg)
 
             if not messages:
-                logger.warning(f"No messages found for user {username}")
+                logger.warning(f"No messages found in channel {channel.id}")
                 return
 
-            logger.info(f"Retrieved {len(messages)} messages from {username}")
+            logger.info(f"Retrieved {len(messages)} messages from channel {channel.id}")
 
-            ai_response = await self._generate_react_with_selection(username, messages)
+            ai_response = await self._generate_react_with_selection(messages)
 
             if not ai_response:
                 logger.error("AI failed to generate a response")
@@ -67,23 +55,19 @@ class RandomReact:
                 logger.error(f"Failed to parse AI response: {ai_response[:200]}")
                 return
 
-            channel = self.bot.get_channel(int(channel_id))
-            if not channel:
-                logger.error(f"Could not find channel {channel_id}")
-                return
+            target_message = None
+            for msg in messages:
+                if str(msg.id) == target_message_id:
+                    target_message = msg
+                    break
 
-            try:
-                target_message = await channel.fetch_message(int(target_message_id))
-            except discord.NotFound:
-                logger.error(f"Message {target_message_id} not found in channel")
-                return
-            except discord.Forbidden:
-                logger.error(f"No permission to fetch message {target_message_id}")
+            if not target_message:
+                logger.error(f"Message {target_message_id} not found in recent messages")
                 return
 
             try:
                 await target_message.add_reaction(emoji)
-                logger.info(f"Successfully reacted with {emoji} to message {target_message_id} from {username}")
+                logger.info(f"Successfully reacted with {emoji} to message {target_message_id}")
             except discord.HTTPException as e:
                 logger.error(f"Failed to add reaction {emoji}: {e}")
                 return
@@ -91,7 +75,7 @@ class RandomReact:
         except Exception as e:
             logger.error(f"Error in random react execution: {e}", exc_info=True)
 
-    async def _generate_react_with_selection(self, username: str, messages: list[dict]) -> str | None:
+    async def _generate_react_with_selection(self, messages: list[discord.Message]) -> str | None:
         try:
             if not self.ai_client.is_available():
                 logger.error("AI client is not available")
@@ -99,11 +83,20 @@ class RandomReact:
 
             prompt = self.prompt
 
-            context_parts = [f"Messages from {username}:\n"]
-            for msg in messages:
-                message_id = msg["discord_message_id"]
-                content = msg["content"]
-                context_parts.append(f"[ID: {message_id}] {username}: {content}")
+            context_parts = ["Recent messages in this channel:\n"]
+            for msg in reversed(messages):
+                message_id = msg.id
+                username = msg.author.display_name
+                content = msg.content or "[no text content]"
+
+                reactions_str = ""
+                if msg.reactions:
+                    reaction_list = []
+                    for reaction in msg.reactions:
+                        reaction_list.append(f"{reaction.emoji}x{reaction.count}")
+                    reactions_str = f" [Reactions: {', '.join(reaction_list)}]"
+
+                context_parts.append(f"[ID: {message_id}] {username}: {content}{reactions_str}")
 
             formatted_context = "\n".join(context_parts)
 
