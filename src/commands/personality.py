@@ -72,11 +72,12 @@ class PersonalityCommand:
             temperature=0.8,
         )
 
-        return (
-            ai_response
-            if ai_response
-            else f"I have data on {target_user.display_name}, but I can't seem to summarize it right now."
-        )
+        formatted_points = self.personality_manager.format_personality_for_prompt(personality)
+
+        if ai_response:
+            return f"{ai_response}{formatted_points}"
+        else:
+            return f"I have data on {target_user.display_name}, but I can't seem to summarize it right now.{formatted_points}"
 
     def _get_personality_prompt(self):
         prompt_path = PROMPT_DIR / "personality_command.txt"
