@@ -269,7 +269,7 @@ class MessageDatabase:
                 SELECT id FROM messages
                 WHERE channel_id = ?
                 ORDER BY timestamp DESC
-                OFFSET ?
+                LIMIT -1 OFFSET ?
             """,
                 (channel_id, keep_last),
             )
