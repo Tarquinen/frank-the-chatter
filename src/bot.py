@@ -85,9 +85,9 @@ class FrankBot(discord.Client):
             logger.info("Random reply scheduler started")
 
         if self.random_react_task is None:
-            from commands.random_react import RandomReact
+            from random_react import RandomReact
 
-            self.random_react = RandomReact(self, self.message_storage, self.ai_client)
+            self.random_react = RandomReact(self, self.ai_client)
             logger.info("Random react initialized (triggers every 10 messages per channel)")
 
         if self.channel_cleanup_task is None:
@@ -109,7 +109,7 @@ class FrankBot(discord.Client):
         if self.channel_message_counts[channel_id] >= 10:
             self.channel_message_counts[channel_id] = 0
             if hasattr(self, "random_react"):
-                task = asyncio.create_task(self.random_react.execute_random_react(message.channel))
+                task = asyncio.create_task(self.random_react.execute(message.channel))
                 task.add_done_callback(lambda t: t.exception() if not t.cancelled() else None)
 
         if self.user and self.user.mentioned_in(message):

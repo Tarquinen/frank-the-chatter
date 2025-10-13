@@ -10,25 +10,14 @@ logger = setup_logger(__name__)
 
 
 class RandomReact:
-    def __init__(self, bot, message_storage, ai_client):
-        self.name = "random_react"
-        self.requires_auth = True
+    def __init__(self, bot, ai_client):
         self.bot = bot
-        self.message_storage = message_storage
         self.ai_client = ai_client
         self.prompt = self._load_prompt()
 
-    async def execute(self, _message, _args) -> str:
+    async def execute(self, channel):
         try:
-            channel = _message.channel
-            await self.execute_random_react(channel)
-            return "Random react triggered successfully! Check the logs for details."
-        except Exception as e:
-            return f"Error triggering random react: {e}"
-
-    async def execute_random_react(self, channel):
-        try:
-            logger.info(f"Starting random react execution in channel {channel.id}")
+            logger.info(f"Starting random react in channel {channel.id}")
 
             messages = []
             async for msg in channel.history(limit=20):
@@ -73,7 +62,7 @@ class RandomReact:
                 return
 
         except Exception as e:
-            logger.error(f"Error in random react execution: {e}", exc_info=True)
+            logger.error(f"Error in random react: {e}", exc_info=True)
 
     async def _generate_react_with_selection(self, messages: list[discord.Message]) -> str | None:
         try:
