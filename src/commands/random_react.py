@@ -100,6 +100,14 @@ class RandomReact:
 
             formatted_context = "\n".join(context_parts)
 
+            logger.info("=" * 80)
+            logger.info("AI CALL INPUT - RANDOM REACT")
+            logger.info("=" * 80)
+            logger.info(f"System Prompt:\n{prompt}")
+            logger.info("-" * 80)
+            logger.info(f"Context:\n{formatted_context}")
+            logger.info("=" * 80)
+
             ai_response = await self.ai_client._generate_with_config(
                 formatted_context=formatted_context,
                 system_prompt=prompt,
@@ -108,6 +116,12 @@ class RandomReact:
                 temperature=1.0,
                 max_tokens=AI_RANDOM_REPLY_MAX_TOKENS,
             )
+
+            logger.info("=" * 80)
+            logger.info("AI CALL OUTPUT - RANDOM REACT")
+            logger.info("=" * 80)
+            logger.info(f"Response:\n{ai_response}")
+            logger.info("=" * 80)
 
             return ai_response
 
