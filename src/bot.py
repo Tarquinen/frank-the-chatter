@@ -79,7 +79,6 @@ class FrankBot(discord.Client):
             from commands.random_reply import RandomReply
 
             self.random_reply = RandomReply(self, self.message_storage, self.ai_client)
-            self.command_handler.set_bot(self)
             self.random_reply_task = asyncio.create_task(self._random_reply_scheduler())
             logger.info("Random reply scheduler started")
 
@@ -89,6 +88,8 @@ class FrankBot(discord.Client):
             self.random_react = RandomReact(self, self.message_storage, self.ai_client)
             self.random_react_task = asyncio.create_task(self._random_react_scheduler())
             logger.info("Random react scheduler started")
+
+        self.command_handler.set_bot(self)
 
     async def on_message(self, message):
         await self._store_message(message)
