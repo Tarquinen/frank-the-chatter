@@ -59,11 +59,15 @@ class PersonalityManager:
                 existing_points = existing_personality["points"]
 
                 if deletions:
-                    existing_points = self._apply_deletions(existing_points, deletions)
+                    existing_points = self._apply_deletions(existing_points, deletions, username)
 
-                merged_points = self._prioritize_points(existing_points, new_points)
+                merged_points = self._prioritize_points(existing_points, new_points, username)
             else:
                 merged_points = new_points[: self.MAX_POINTS]
+                for point in merged_points:
+                    content = point.get("content", "")
+                    importance = point.get("importance", "unknown")
+                    logger.info(f"Added personality for {username}: '{content}' (importance: {importance})")
 
             points_json = json.dumps(merged_points)
 
@@ -89,7 +93,7 @@ class PersonalityManager:
             return False
 
     def _apply_deletions(
-        self, existing_points: list[dict[str, str]], deletions: list[dict[str, str]]
+        self, existing_points: list[dict[str, str]], deletions: list[dict[str, str]], username: str
     ) -> list[dict[str, str]]:
         for deletion in deletions:
             content_to_delete = deletion.get("content", "").strip()
@@ -98,13 +102,15 @@ class PersonalityManager:
             for point in existing_points[:]:
                 existing_content = point.get("content", "").strip()
                 if existing_content == content_to_delete:
-                    logger.info(f"Deleting personality point: '{content_to_delete}' - Reason: {reason}")
+                    logger.info(f"Deleted personality for {username}: '{content_to_delete}' (reason: {reason})")
                     existing_points.remove(point)
                     break
 
         return existing_points
 
-    def _prioritize_points(self, existing: list[dict[str, str]], new: list[dict[str, str]]) -> list[dict[str, str]]:
+    def _prioritize_points(
+        self, existing: list[dict[str, str]], new: list[dict[str, str]], username: str
+    ) -> list[dict[str, str]]:
         all_points = []
 
         for point in existing:
@@ -123,6 +129,10 @@ class PersonalityManager:
 
             if not replaced:
                 all_points.append(new_point)
+                importance = new_point.get("importance", "unknown")
+                logger.info(
+                    f"Added personality for {username}: '{new_point.get('content', '')}' (importance: {importance})"
+                )
 
         sorted_points = sorted(
             all_points,
