@@ -30,7 +30,6 @@ class Config:
     AI_API_KEY = os.getenv("GEMINI_API_KEY")
     AI_API_BASE_URL = os.getenv("AI_API_BASE_URL", "https://generativelanguage.googleapis.com/v1")
     AI_MODEL = os.getenv("AI_MODEL", "gemini-2.5-flash")
-    AI_MAX_TOKENS = int(os.getenv("AI_MAX_TOKENS", "2000"))
 
     # Storage Configuration (absolute paths from project root)
     DATABASE_PATH = os.getenv("DATABASE_PATH", str(PROJECT_ROOT / "data" / "conversations.db"))

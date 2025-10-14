@@ -11,6 +11,7 @@ from google.genai import types
 
 from database import MessageDatabase
 from utils.config import Config
+from utils.constants import AI_MAX_TOKENS
 
 
 def test_with_actual_context():
@@ -69,7 +70,7 @@ def test_with_actual_context():
     # Test with tools (current config)
     config_with_tools = types.GenerateContentConfig(
         system_instruction=system_prompt,
-        max_output_tokens=min(Config.AI_MAX_TOKENS, 2000),
+        max_output_tokens=min(AI_MAX_TOKENS, 2000),
         temperature=1,
         top_p=0.95,
         top_k=20,
@@ -111,7 +112,7 @@ def test_with_actual_context():
     print("\n=== Test 2: Without Tools ===")
     config_no_tools = types.GenerateContentConfig(
         system_instruction=system_prompt,
-        max_output_tokens=min(Config.AI_MAX_TOKENS, 2000),
+        max_output_tokens=min(AI_MAX_TOKENS, 2000),
         temperature=1,
         top_p=0.95,
         top_k=20,

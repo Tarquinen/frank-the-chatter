@@ -15,6 +15,7 @@ from utils.constants import (
     AI_DEFAULT_TEMPERATURE,
     AI_MAX_IMAGE_UPLOAD,
     AI_MAX_RESPONSE_CHARS,
+    AI_MAX_TOKENS,
     AI_RESPONSE_TRUNCATE_TO,
     AI_TOP_K,
     AI_TOP_P,
@@ -268,7 +269,7 @@ class AIClient:
 
             config_kwargs = {
                 "system_instruction": system_prompt,
-                "max_output_tokens": max_tokens if max_tokens is not None else Config.AI_MAX_TOKENS,
+                "max_output_tokens": max_tokens if max_tokens is not None else AI_MAX_TOKENS,
                 "temperature": temperature,
                 "top_p": AI_TOP_P,
                 "top_k": AI_TOP_K,
@@ -503,6 +504,6 @@ class AIClient:
         return {
             "model": Config.AI_MODEL,
             "available": self.is_available(),
-            "max_tokens": Config.AI_MAX_TOKENS,
+            "max_tokens": AI_MAX_TOKENS,
             "api_configured": bool(Config.AI_API_KEY),
         }
