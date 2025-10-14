@@ -204,15 +204,15 @@ class FrankBot(discord.Client):
                     if updates:
                         log_parts.append(f"added {len(updates)} new points")
                         for update in updates:
-                            logger.info(
-                                f"Added personality for {username}: '{update.get('content', '')}' (importance: {update.get('importance', 'unknown')})"
-                            )
+                            content = update.get("content", "")
+                            importance = update.get("importance", "unknown")
+                            logger.info(f"Added personality for {username}: '{content}' (importance: {importance})")
                     if deletions:
                         log_parts.append(f"deleted {len(deletions)} points")
                         for deletion in deletions:
-                            logger.info(
-                                f"Deleted personality for {username}: '{deletion.get('content', '')}' (reason: {deletion.get('reason', 'No reason')})"
-                            )
+                            content = deletion.get("content", "")
+                            reason = deletion.get("reason", "No reason")
+                            logger.info(f"Deleted personality for {username}: '{content}' (reason: {reason})")
                     if log_parts:
                         logger.info(f"Updated personality for {username}: {', '.join(log_parts)}")
 
