@@ -17,8 +17,6 @@ class RandomReact:
 
     async def execute(self, channel):
         try:
-            logger.info(f"Starting random react in channel {channel.id}")
-
             messages = []
             async for msg in channel.history(limit=RANDOM_REACT_MESSAGE_COUNT):
                 if msg.author != self.bot.user:
@@ -28,15 +26,11 @@ class RandomReact:
                 logger.warning(f"No messages found in channel {channel.id}")
                 return
 
-            logger.info(f"Retrieved {len(messages)} messages from channel {channel.id}")
-
             ai_response = await self._generate_react_with_selection(messages)
 
             if not ai_response:
                 logger.error("AI failed to generate a response")
                 return
-
-            logger.info(f"AI response: {ai_response}")
 
             target_message_id, emoji = self._parse_ai_response(ai_response)
 

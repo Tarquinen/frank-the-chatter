@@ -67,7 +67,10 @@ class PersonalityManager:
                 for point in merged_points:
                     content = point.get("content", "")
                     importance = point.get("importance", "unknown")
-                    logger.info(f"Added personality for {username}: '{content}' (importance: {importance})")
+                    reason = point.get("reason", "No reason provided")
+                    logger.info(
+                        f"Added personality for {username}: '{content}' (importance: {importance}, reason: {reason})"
+                    )
 
             points_json = json.dumps(merged_points)
 
@@ -85,7 +88,6 @@ class PersonalityManager:
                 )
                 conn.commit()
 
-            logger.info(f"Updated personality for user {username} ({user_id}): {len(merged_points)} points")
             return True
 
         except Exception as e:
@@ -129,9 +131,11 @@ class PersonalityManager:
 
             if not replaced:
                 all_points.append(new_point)
+                content = new_point.get("content", "")
                 importance = new_point.get("importance", "unknown")
+                reason = new_point.get("reason", "No reason provided")
                 logger.info(
-                    f"Added personality for {username}: '{new_point.get('content', '')}' (importance: {importance})"
+                    f"Added personality for {username}: '{content}' (importance: {importance}, reason: {reason})"
                 )
 
         sorted_points = sorted(

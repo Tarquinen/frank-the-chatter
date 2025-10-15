@@ -174,16 +174,10 @@ class FrankBot(discord.Client):
 
             recent_messages = self.message_storage.get_recent_messages(channel_id, MAX_MESSAGE_CONTEXT_FOR_AI)
 
-            logger.info(f"Bot mentioned in {getattr(message.channel, 'name', 'DM')} by {message.author.display_name}")
-            logger.info(f"Available context: {len(recent_messages)} messages from database")
-
             user_personality = None
             if self.personality_manager:
                 user_id = str(message.author.id)
                 user_personality = self.personality_manager.get_user_personality(user_id)
-                if user_personality:
-                    point_count = len(user_personality.get("points", []))
-                    logger.info(f"Loaded personality for {message.author.display_name}: {point_count} points")
 
             try:
                 ai_response, personality_changes = await self.ai_client.generate_response(
