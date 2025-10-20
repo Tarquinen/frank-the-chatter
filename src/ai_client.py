@@ -359,10 +359,6 @@ class AIClient:
         if Config.ENABLE_PERSONALITY_FEATURE and self.personality_prompt:
             combined_prompt = f"{self.system_prompt}\n\n{self.personality_prompt}"
 
-        logger.info(f"AI request - Image URLs: {image_urls}")
-        logger.info(f"AI request - Full system prompt:\n{combined_prompt}")
-        logger.info(f"AI request - Full context:\n{formatted_context}")
-
         return await self._generate_with_config(
             formatted_context=formatted_context,
             system_prompt=combined_prompt,
