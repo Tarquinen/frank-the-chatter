@@ -279,6 +279,7 @@ def main():
         try:
             bot = FrankBot()
             bot.run(Config.DISCORD_TOKEN, reconnect=True)
+            reconnect_delay = 5
         except KeyboardInterrupt:
             logger.info("Bot shutdown requested by user")
             break
