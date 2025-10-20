@@ -159,14 +159,6 @@ class FrankBot(discord.Client):
 
                             self.personality_manager.update_user_personality(user_id, username, updates, deletions)
 
-                            log_parts = []
-                            if updates:
-                                log_parts.append(f"added {len(updates)} new points")
-                            if deletions:
-                                log_parts.append(f"deleted {len(deletions)} points")
-                            if log_parts:
-                                logger.info(f"Updated personality for {username}: {', '.join(log_parts)}")
-
                     if "execute_after_send" in command_result:
                         await command_result["execute_after_send"](message, sent_message)
 
@@ -193,14 +185,6 @@ class FrankBot(discord.Client):
                     deletions = personality_changes.get("deletions", [])
 
                     self.personality_manager.update_user_personality(user_id, username, updates, deletions)
-
-                    log_parts = []
-                    if updates:
-                        log_parts.append(f"added {len(updates)} new points")
-                    if deletions:
-                        log_parts.append(f"deleted {len(deletions)} points")
-                    if log_parts:
-                        logger.info(f"Updated personality for {username}: {', '.join(log_parts)}")
 
                 if ai_response:
                     await message.channel.send(ai_response)
