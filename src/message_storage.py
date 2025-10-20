@@ -31,12 +31,28 @@ class MessageStorage:
         self.size_check_interval = DB_SIZE_CHECK_INTERVAL
         logger.info(f"MessageStorage initialized with database: {self.db_path}")
 
+    def _replace_mentions_with_usernames(self, message: discord.Message) -> str:
+        content = message.content or ""
+
+        if not message.mentions:
+            return content
+
+        for user in message.mentions:
+            user_mention = f"<@{user.id}>"
+            user_mention_with_exclamation = f"<@!{user.id}>"
+            username = user.display_name
+
+            content = content.replace(user_mention, f"@{username}")
+            content = content.replace(user_mention_with_exclamation, f"@{username}")
+
+        return content
+
     def store_message(self, message: discord.Message) -> int:
         channel_id = str(message.channel.id)
         discord_message_id = str(message.id)
         user_id = str(message.author.id)
         username = message.author.display_name
-        content = message.content or ""
+        content = self._replace_mentions_with_usernames(message)
         timestamp = message.created_at
 
         attachments = []
