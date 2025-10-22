@@ -185,7 +185,6 @@ class AIClient:
 
                 Path(tmp_path).unlink()
 
-                logger.info(f"Uploaded image to Gemini: {uploaded_file.name}")
                 return uploaded_file
 
         except Exception as e:
