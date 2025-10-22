@@ -1,150 +1,81 @@
-# Frank the Chatter — Discord Bot
+# Frank the Chatter - Discord Bot
 
-A lightweight Discord bot that logs messages to SQLite and replies with AI when mentioned. Designed for easy local use and one-command VM setup.
+A Discord bot that logs conversations and replies with AI when mentioned.
 
-## Quick Start (Local)
+## What It Does
 
-Prereqs: Python 3.11+, Git
+- Logs all messages to SQLite database
+- Responds with AI when mentioned (@Frank)
+- Stores conversation context for smart replies
+- Supports images and attachments
+- Runs on local machine or VM
 
-1) Create a virtualenv and install deps
+## Quick Setup
+
+### 1. Install Dependencies
 ```bash
 python3 -m venv venv
 ./venv/bin/pip install -r config/requirements.txt
 ```
 
-2) Create .env in the repo root
+### 2. Create .env File
 ```bash
-DISCORD_TOKEN=your_discord_user_token  # self token required for discord.py-self
-GEMINI_API_KEY=your_google_gemini_api_key   # optional but recommended
+DISCORD_TOKEN=your_discord_user_token
+GEMINI_API_KEY=your_google_gemini_api_key
 ```
 
-3) Run the bot
+### 3. Run Bot
 ```bash
 ./scripts/run.sh
 ```
 
-## Get a Discord Token (Self Token for discord.py-self)
+## Commands
 
-High-level approach
-- Log into Discord in your browser.
-- Open Developer Tools → Network tab.
-- Perform an action that triggers an authenticated request (switch channel, send a message).
-- Locate a request to the Discord API (e.g., `https://discord.com/api/v9/...`).
-- Inspect the request headers and copy the `authorization` value — that is your self token.
-- Put it in `.env` as `DISCORD_TOKEN=...`.
+- `!commands` - List all commands
+- `!summarize [count|today|yesterday]` - Summarize conversation
+- `!bh` - Get helpful advice from Larry
+- `!roast @user` - Roast someone based on message history
+- `!personality [@user]` - Show personality traits
+- `!lobotomize [count|all]` - Clear bot memory (Dan only)
 
-Security
-- Treat your token like a password; never share or commit it.
-- If it’s exposed, rotate the token by changing your Discord password.
+## Get Discord Token
 
-Note
-- If you want to avoid self tokens and be ToS-compliant, the alternative is migrating this app to the official bot API (I can help with refactoring if you choose that route).
+1. Open Discord in browser
+2. Press F12 → Network tab
+3. Send a message or switch channels
+4. Find Discord API request
+5. Copy `authorization` header value
+6. Paste as `DISCORD_TOKEN` in .env
 
-## Deploy on a VM
+## VM Deployment
 
-Run the setup script from anywhere in the repo (it jumps to repo root automatically):
+Run setup script on VM:
 ```bash
 bash deploy/setup.sh
 ```
 
-What the script does
-- Updates system packages via apt.
-- Installs Python, pip, venv, and git.
-- Creates a Python virtualenv and upgrades pip.
-- Installs project deps from `config/requirements.txt`.
-- Upgrades to the latest dev `discord.py-self` from GitHub.
-- Patches `discord.py-self` for `global_name` support using `./scripts/patch_discord_global_name.sh`.
-- Creates data directories (`data/` and `data/logs/`).
-- Initializes the SQLite database (imports `MessageDatabase`).
-- Adds helpful aliases to your `~/.bashrc`:
-  - `sv` — source venv
-  - `pydev` — create venv and upgrade pip
-  - `frank-query` — run DB query tool (`./venv/bin/python scripts/db_query.py`)
-  - `frank-start` — run bot in background via `nohup ./scripts/run.sh > bot.log 2>&1 &`
-  - `frank-stop` — stop the bot
-  - `frank-restart` — stop then start
-  - `frank-logs` — tail `bot.log`
-  - `frank-status` — check if `src/bot.py` is running
-
-After it finishes
+Then use aliases:
 ```bash
-# 1) Ensure your .env exists (see Variables below)
-# 2) Load aliases
-source ~/.bashrc
-# 3) Start and check
-frank-start
-frank-status
-frank-logs
-# 4) Stop if needed
-frank-stop
+frank-start    # Start bot
+frank-status   # Check status
+frank-logs     # View logs
+frank-stop     # Stop bot
 ```
 
-Manual run alternative
-```bash
-./scripts/run.sh     # foreground, prints logs
-```
+## Configuration
 
-## Variables (.env)
+Required:
+- `DISCORD_TOKEN` - Discord user token
 
-Example .env (placeholders)
-```env
-DISCORD_TOKEN=your_discord_user_token
-GEMINI_API_KEY=your_google_gemini_api_key
-AI_MODEL=gemini-2.5-flash
-BOT_USER_ID=123456789012345678
-DAN_USER_ID=123456789012345678
-```
-
-Required
-- `DISCORD_TOKEN` — Discord user token (self token for discord.py-self).
-
-Recommended
-- `GEMINI_API_KEY` — enables AI replies (without it, Frank logs messages and replies with a fallback string).
-
-Optional (defaults shown)
-- `AI_MODEL` — default `gemini-2.5-flash`
-- `AI_MAX_TOKENS` — default `2000`
-- `DATABASE_PATH` — default `./data/conversations.db`
-- `LOG_FILE_PATH` — default `./data/logs/bot.log`
-- `LOG_LEVEL` — default `INFO`
-
-Note: `frank-start` writes process output to `./bot.log`; the bot also writes structured logs to `LOG_FILE_PATH`.
-
-## Diagnostics
-
-- `tools/diagnose_user_data.py` — Logs raw Discord gateway payloads and parsed message attributes to verify the presence of `global_name` and related fields.
-- `tools/test_raw_data.py` — Minimal client that prints `author.global_name` when seen in `MESSAGE_CREATE` events.
-- `tools/diagnose_gemini.py` — Tests Gemini API with recent DB context to debug empty responses and configuration issues.
-
-Run diagnostics with your `.env` configured, e.g.:
-```bash
-./venv/bin/python tools/diagnose_user_data.py
-```
-
-## Project Layout
-```
-frank-the-chatter/
-├── src/
-│   ├── bot.py                # Discord bot
-│   ├── database.py           # SQLite operations
-│   ├── message_storage.py    # Message handling
-│   ├── ai_client.py          # Gemini integration
-│   └── utils/
-├── scripts/
-│   ├── run.sh                # Start bot locally
-│   ├── stop.sh               # Stop bot helper
-│   ├── db_query.py           # Query/inspect the DB
-│   └── patch_discord_global_name.sh
-├── deploy/
-│   └── setup.sh              # One-command VM setup
-├── prompts/                  # System prompts
-├── config/
-│   └── requirements.txt      # Python dependencies
-├── tools/                    # Diagnostics tools
-└── tests/                    # Test scripts (optional to run)
-```
+Optional:
+- `GEMINI_API_KEY` - Google Gemini API key (for AI replies)
+- `AI_MODEL` - AI model (default: gemini-2.5-flash)
+- `DATABASE_PATH` - Database location (default: ./data/conversations.db)
+- `LOG_LEVEL` - Logging level (default: INFO)
 
 ## Troubleshooting
-- Aliases not found: `source ~/.bashrc` (after running the setup script).
-- Bot says AI unavailable: set `GEMINI_API_KEY` in `.env` and restart.
-- Logs: check `./bot.log` (process output) and `./data/logs/bot.log` (structured logs).
+
+- **Bot not responding**: Check `DISCORD_TOKEN` in .env
+- **No AI replies**: Add `GEMINI_API_KEY` to .env
+- **Logs**: Check `./bot.log` and `./data/logs/bot.log`
+- **Aliases not found**: Run `source ~/.bashrc` after VM setup
