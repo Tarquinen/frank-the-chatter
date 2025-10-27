@@ -58,6 +58,9 @@ class FrankBot(discord.Client):
 
     async def on_ready(self):
         """Called when bot connects successfully"""
+        global reconnect_delay
+        reconnect_delay = 5
+
         if self.user is None:
             logger.error("Bot user is None after connecting")
             return
@@ -265,21 +268,22 @@ class FrankBot(discord.Client):
             logger.error(f"Error cleaning up inaccessible channels: {e}", exc_info=True)
 
 
+reconnect_delay = 5
+
+
 def main():
     """Main entry point with auto-reconnect"""
+    global reconnect_delay
     logger.info("Starting Frank the Chatter bot...")
 
     if not Config.DISCORD_TOKEN:
         logger.error("DISCORD_TOKEN not found in environment")
         return
 
-    reconnect_delay = 5
-
     while True:
         try:
             bot = FrankBot()
             bot.run(Config.DISCORD_TOKEN, reconnect=True)
-            reconnect_delay = 5
         except KeyboardInterrupt:
             logger.info("Bot shutdown requested by user")
             break
