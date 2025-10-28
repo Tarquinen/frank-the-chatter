@@ -31,7 +31,10 @@ logger = setup_logger()
 
 class FrankBot(discord.Client):
     def __init__(self):
-        super().__init__()
+        super().__init__(
+            heartbeat_timeout=90.0,
+            guild_ready_timeout=10.0,
+        )
 
         self.message_storage = MessageStorage()
         logger.info("Database storage initialized")
