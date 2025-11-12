@@ -2,10 +2,6 @@
 
 A Discord bot that logs conversations and replies with AI when mentioned.
 
-
-
-test change
-
 ## What It Does
 
 - Logs all messages to SQLite database
